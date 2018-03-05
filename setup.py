@@ -22,7 +22,7 @@ if __name__ == '__main__':
             'Programming Language :: Python :: 3'
         ],
 
-        python_requires='>=3.5'
+        python_requires='>=3.5',
         py_modules=["six"],
         install_requires=['sympy>=1.1.1', 'PyQt5>=5.10.1'],
 
