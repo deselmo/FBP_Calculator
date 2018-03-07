@@ -9,7 +9,7 @@ import jsonpickle
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from main_ui import Ui_WindowCreateRS
+from main_ui import Ui_MainWindow
 
 from reactionsystem import \
     Reaction, \
@@ -18,7 +18,7 @@ from reactionsystem import \
     ExceptionReactionSystem
 
 
-class WindowCreateRS(Ui_WindowCreateRS, QtWidgets.QMainWindow):
+class MainWindow(Ui_MainWindow, QtWidgets.QMainWindow):
     def __init__(self):
         super(QtWidgets.QMainWindow, self).__init__()
 
@@ -53,6 +53,13 @@ class WindowCreateRS(Ui_WindowCreateRS, QtWidgets.QMainWindow):
         self.actionSave_as.triggered.connect(self.actionSave_as_triggered)
         self.actionSave.triggered.connect(self.actionSave_triggered)
         self.actionQuit.triggered.connect(self.actionQuit_triggered)
+
+        self.actionAbout.triggered.connect(self.actionAbout_triggered)
+
+
+    def closeEvent(self, event):
+        event.ignore()
+        self.actionQuit_triggered()
 
 
     def actionNew_triggered(self, value=None):
@@ -143,6 +150,11 @@ class WindowCreateRS(Ui_WindowCreateRS, QtWidgets.QMainWindow):
             else:
                 return False
         return True
+
+
+    def actionAbout_triggered(self):
+        wdg = QtWidgets.QWidget()
+        wdg.show()
 
     
     def pushButtonAdd_clicked(self):
@@ -255,6 +267,6 @@ class WindowCreateRS(Ui_WindowCreateRS, QtWidgets.QMainWindow):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    mainWindow = WindowCreateRS()
+    mainWindow = MainWindow()
     mainWindow.show()
     sys.exit(app.exec_())
