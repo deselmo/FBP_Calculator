@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
         python_requires='>=3.5',
         py_modules=["six"],
-        install_requires=['sympy>=1.1.1', 'PyQt5>=5.10.1'],
+        install_requires=['sympy>=1.1.1', 'PyQt5>=5.10.1', 'jsonpickle>=0.9.6'],
 
         project_urls={
             'Bug Reports': 'https://github.com/deselmo/Tirocinio/issues',
