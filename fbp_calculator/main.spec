@@ -4,7 +4,7 @@ block_cipher = None
 
 import sys; sys.setrecursionlimit(10000)
 
-a = Analysis(['main.pyw'],
+a = Analysis(['main.py'],
              pathex=['/home/william/Desktop/project'],
              binaries=[],
              datas=[],

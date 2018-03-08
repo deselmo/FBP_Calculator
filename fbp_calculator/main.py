@@ -9,7 +9,8 @@ import jsonpickle
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from main_ui import Ui_MainWindow
+from main_ui import Ui_MainWindowFBP
+from formula_ui import Ui_DialogFBP
 
 from reactionsystem import \
     Reaction, \
@@ -18,11 +19,13 @@ from reactionsystem import \
     ExceptionReactionSystem
 
 
-class MainWindow(Ui_MainWindow, QtWidgets.QMainWindow):
-    def __init__(self):
-        super(QtWidgets.QMainWindow, self).__init__()
+class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
 
         self.setupUi(self)
+
+        self._translate = QtCore.QCoreApplication.translate
  
         self.statusbarStyle = self.statusbar.styleSheet()
 
@@ -36,15 +39,18 @@ class MainWindow(Ui_MainWindow, QtWidgets.QMainWindow):
         self.lineEditProducts.setValidator(validatorLineEditSymbols)
         self.lineEditInhibitors.setValidator(validatorLineEditSymbols)
         self.lineEditCalculatorSymbols.setValidator(validatorLineEditSymbols)
-        self.lineEditCalculatorSteps.setValidator(QtGui.QIntValidator(0, 99))
+        self.lineEditCalculatorSteps.setValidator(QtGui.QIntValidator(1, 999))
 
         self.statusbar.messageChanged.connect(self.statusbarChanged)
+
         self.pushButtonAdd.clicked.connect(self.pushButtonAdd_clicked)
+        self.pushButtonDelete.clicked.connect(self.pushButtonDelete_clicked)
+        self.pushButtonCalculate.clicked.connect(self.pushButtonCalculate_clicked)
+        
         self.lineEditReactants.textChanged.connect(self.pushButtonAdd_enable)
         self.lineEditProducts.textChanged.connect(self.pushButtonAdd_enable)
         self.listWidgetReactions._checked_item_number = 0
         self.listWidgetReactions.itemChanged.connect(self.listWidgetReactions_itemChanged)
-        self.pushButtonDelete.clicked.connect(self.pushButtonDelete_clicked)
         self.lineEditCalculatorSymbols.textChanged.connect(self.pushButtonCalculate_enable)
         self.lineEditCalculatorSteps.textChanged.connect(self.pushButtonCalculate_enable)
 
@@ -55,6 +61,10 @@ class MainWindow(Ui_MainWindow, QtWidgets.QMainWindow):
         self.actionQuit.triggered.connect(self.actionQuit_triggered)
 
         self.actionAbout.triggered.connect(self.actionAbout_triggered)
+
+
+    def pushButtonCalculate_clicked(self):
+        FormulaWindow(self).show()
 
 
     def closeEvent(self, event):
@@ -140,12 +150,12 @@ class MainWindow(Ui_MainWindow, QtWidgets.QMainWindow):
             buttonReply = QtWidgets.QMessageBox.warning(self,
                 'Save changes before closing?',
                 'Your changes will be lost if you don’t save them.',
-                QtWidgets.QMessageBox.Cancel | QtWidgets.QMessageBox.Close | QtWidgets.QMessageBox.Save,
+                QtWidgets.QMessageBox.Cancel | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Save,
                 QtWidgets.QMessageBox.Cancel)
 
             if buttonReply == QtWidgets.QMessageBox.Save:
                 self.actionSave_triggered()
-            elif buttonReply == QtWidgets.QMessageBox.Close:
+            elif buttonReply == QtWidgets.QMessageBox.Discard:
                 pass
             else:
                 return False
@@ -153,8 +163,15 @@ class MainWindow(Ui_MainWindow, QtWidgets.QMainWindow):
 
 
     def actionAbout_triggered(self):
-        wdg = QtWidgets.QWidget()
-        wdg.show()
+        QtWidgets.QMessageBox.about(self,
+            self._translate('MainWindow', 'FBP Calculator'),
+            'version 1.0.0\n' +
+            'Writtern by William Guglielmo')
+
+                # 'About RS Calculator',
+                # 'RS Calculator.',
+                # QtWidgets.QMessageBox.Cancel | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Save,
+                # QtWidgets.QMessageBox.Cancel)
 
     
     def pushButtonAdd_clicked(self):
@@ -264,8 +281,49 @@ class MainWindow(Ui_MainWindow, QtWidgets.QMainWindow):
         self.notify(message)
         
 
+class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
+    def __init__(self, parent):
+        super(FormulaWindow, self).__init__(parent)
+
+        self.setupUi(self)
+
+        self.symbols = parent.lineEditCalculatorSymbols.text()
+        self.steps = parent.lineEditCalculatorSteps.text()
+        self.rs = ReactionSystem(parent.reaction_set)
+
+        self.lineEditSymbols.setText(self.symbols)
+        self.lineEditSteps.setText(self.steps)
+        
+        self.labelLoadingImage.setMovie(QtGui.QMovie(":/loader.gif"))
+        self.labelLoadingImage.movie().start()
+
+
+        self.thread = TestThread(self)
+        self.thread.finished.connect(self.updateTextBrowserFormula)
+        self.thread.start()
+
+
+    def updateTextBrowserFormula(self):
+        self.labelLoadingImage.setVisible(False)
+        self.labelLoadingImage.movie().stop()
+        self.textBrowserFormula.setObjectName("textBrowserFormula")
+        self.textBrowserFormula.setText(self.formula)
+        self.raise_()
+
+
+
+class TestThread(QtCore.QThread):
+    def __init__(self, parent):
+        self.parent = parent
+        super(TestThread, self).__init__()
+
+    def run(self):
+        parent = self.parent
+        parent.formula = str(parent.rs.fbp(parent.symbols, int(parent.steps) - 1))
+
 
 if __name__ == '__main__':
+    sys.setrecursionlimit(10000)
     app = QtWidgets.QApplication(sys.argv)
     mainWindow = MainWindow()
     mainWindow.show()
