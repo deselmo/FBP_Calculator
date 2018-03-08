@@ -168,11 +168,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             'version 1.0.0\n' +
             'Writtern by William Guglielmo')
 
-                # 'About RS Calculator',
-                # 'RS Calculator.',
-                # QtWidgets.QMessageBox.Cancel | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Save,
-                # QtWidgets.QMessageBox.Cancel)
-
     
     def pushButtonAdd_clicked(self):
         reactants = self.lineEditReactants.text()
@@ -326,5 +321,13 @@ if __name__ == '__main__':
     sys.setrecursionlimit(10000)
     app = QtWidgets.QApplication(sys.argv)
     mainWindow = MainWindow()
+
+    mainWindow.setGeometry(
+        QtWidgets.QStyle.alignedRect(
+            QtCore.Qt.LeftToRight,
+            QtCore.Qt.AlignCenter,
+            mainWindow.size(),
+            app.desktop().availableGeometry()))
+    
     mainWindow.show()
     sys.exit(app.exec_())
