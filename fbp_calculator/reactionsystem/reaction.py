@@ -25,7 +25,7 @@ class Reaction:
 
 
     @staticmethod
-    def _check_symbol_set(s):
+    def _create_symbol_set(s):
         if isinstance(s, str):
             s = set(s.split(' '))
             if '' in s:
@@ -50,7 +50,7 @@ class Reaction:
 
     @R.setter
     def R(self, R):
-        setR = Reaction._check_symbol_set(R)
+        setR = Reaction._create_symbol_set(R)
         if len(setR) == 0: raise ExceptionReactionSystem.ReactantSetCannotBeEmpty()
         self._R = setR
 
@@ -62,7 +62,7 @@ class Reaction:
 
     @P.setter
     def P(self, P):
-        setP = Reaction._check_symbol_set(P)
+        setP = Reaction._create_symbol_set(P)
         if len(setP) == 0: raise ExceptionReactionSystem.ProductSetCannotBeEmpty()
         self._P = setP
 
@@ -76,7 +76,7 @@ class Reaction:
 
     @I.setter
     def I(self, I):
-        setI = Reaction._check_symbol_set(I)
+        setI = Reaction._create_symbol_set(I)
         self._I = setI
 
         self._check_reaction_applicability()

@@ -1,9 +1,11 @@
 #!/usr/bin/python3
+
 # -*- coding: utf-8 -*-
 
 import sys
 import os
 import re
+from copy import deepcopy
 
 import jsonpickle
 
@@ -33,13 +35,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         
         self.current_file_name = ''
 
-        validatorLineEditSymbols = QtGui.QRegExpValidator(QtCore.QRegExp("^[a-zA-Z\s]+$")) # pylint: disable=W1401
+        validatorLineEditSymbols = QtGui.QRegExpValidator(QtCore.QRegExp("^[a-zA-Z ]+$")) # pylint: disable=W1401
 
         self.lineEditReactants.setValidator(validatorLineEditSymbols)
         self.lineEditProducts.setValidator(validatorLineEditSymbols)
         self.lineEditInhibitors.setValidator(validatorLineEditSymbols)
         self.lineEditCalculatorSymbols.setValidator(validatorLineEditSymbols)
-        self.lineEditCalculatorSteps.setValidator(QtGui.QIntValidator(1, 999))
+        self.lineEditCalculatorSteps.setValidator(QtGui.QIntValidator(0, 999))
 
         self.statusbar.messageChanged.connect(self.statusbarChanged)
 
@@ -146,7 +148,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
 
     def check_save(self):
-        if self.actionSave.isEnabled():
+        if self.actionSave.isEnabled() and len(self.reaction_set):
             buttonReply = QtWidgets.QMessageBox.warning(self,
                 'Save changes before closing?',
                 'Your changes will be lost if you don’t save them.',
@@ -236,6 +238,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def pushButtonCalculate_enable(self, string=None):
         if self.lineEditCalculatorSymbols.text() != '' \
                 and self.lineEditCalculatorSteps.text() != '' \
+                and int(self.lineEditCalculatorSteps.text()) != 0 \
                 and len(self.reaction_set):
             self.pushButtonCalculate.setEnabled(True)
         else:
@@ -279,12 +282,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
     def __init__(self, parent):
         super(FormulaWindow, self).__init__(parent)
-
         self.setupUi(self)
 
-        self.symbols = parent.lineEditCalculatorSymbols.text()
-        self.steps = parent.lineEditCalculatorSteps.text()
-        self.rs = ReactionSystem(parent.reaction_set)
+        self.comboBoxFormulaType.setCurrentIndex(1)
+        self.textBrowserFormula.setVisible(False)
+        self.tableWidgetFormula.setVisible(False)
+
+        self.symbols = deepcopy(parent.lineEditCalculatorSymbols.text())
+        self.steps = deepcopy(parent.lineEditCalculatorSteps.text())
+        self.rs = ReactionSystem(deepcopy(parent.reaction_set))
 
         self.lineEditSymbols.setText(self.symbols)
         self.lineEditSteps.setText(self.steps)
@@ -292,29 +298,100 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.labelLoadingImage.setMovie(QtGui.QMovie(":/loader.gif"))
         self.labelLoadingImage.movie().start()
 
+        self.comboBoxFormulaType.currentIndexChanged.connect(self.comboBoxFormulaType_currentIndexChanged)
 
-        self.thread = TestThread(self)
-        self.thread.finished.connect(self.updateTextBrowserFormula)
-        self.thread.start()
+        self.threadCalculateFBP = ThreadCalculateFBP(self)
+        self.threadCalculateFBP.finished.connect(self.threadCalculateFBP_finished)
+        self.threadCalculateFBP.start()
+
+    
+    def comboBoxFormulaType_currentIndexChanged(self, index):
+        if index == 0:
+            self.textBrowserFormula.setVisible(True)
+            self.listWidgetFormula.setVisible(False)
+            self.tableWidgetFormula.setVisible(False)
+        elif index == 1:
+            self.textBrowserFormula.setVisible(False)
+            self.listWidgetFormula.setVisible(True)
+            self.tableWidgetFormula.setVisible(False)
+        elif index == 2:
+            self.textBrowserFormula.setVisible(False)
+            self.listWidgetFormula.setVisible(False)
+            self.tableWidgetFormula.setVisible(True)
 
 
-    def updateTextBrowserFormula(self):
+    def threadCalculateFBP_finished(self):
+        self.labelComputing.setVisible(False)
         self.labelLoadingImage.setVisible(False)
         self.labelLoadingImage.movie().stop()
-        self.textBrowserFormula.setObjectName("textBrowserFormula")
+
+        self.comboBoxFormulaType.setEnabled(True)
+        self.listWidgetFormula.setEnabled(True)
+
         self.textBrowserFormula.setText(self.formula)
+
+        formula2 = (self.formula
+            .replace('(', '')
+            .replace(')', '')
+            .split(' ∨ '))
+
+        for f in formula2:
+            self.listWidgetFormula.addItem(QtWidgets.QListWidgetItem(f))
+
+        for f in self.structuredFormula:
+            item = ''
+            for i in range(0, len(f)-1):
+                s, n = f[i]
+                item += '{}_{} ∧ '.format(s, str(n))
+            s, n = f[len(f)-1]
+            item += '{}_{}'.format(s, str(n))
+
+            self.tableWidgetFormula.addItem(QtWidgets.QListWidgetItem(item))
+
         self.raise_()
 
 
 
-class TestThread(QtCore.QThread):
+class ThreadCalculateFBP(QtCore.QThread):
     def __init__(self, parent):
         self.parent = parent
-        super(TestThread, self).__init__()
+        super(ThreadCalculateFBP, self).__init__()
 
     def run(self):
         parent = self.parent
-        parent.formula = str(parent.rs.fbp(parent.symbols, int(parent.steps) - 1))
+        formula = parent.rs.fbp(parent.symbols, int(parent.steps) - 1)
+
+        formula = (str(formula)
+            .replace('~', '¬')
+            .replace('&', '∧')
+            .replace('|', '∨'))
+
+        structuredFormula = (formula
+            .replace(' ', '')
+            .replace('(', '')
+            .replace(')', '')
+            .split('∨'))
+
+        # for i_structuredFormula in range(0, len(structuredFormula)):
+        #     andListFormula = structuredFormula[i_structuredFormula].split('∧')
+        #     l = []
+        #     for i_andListFormula in range(0, len(andListFormula)):
+        #         s, n = tuple(andListFormula[i_andListFormula].split('_'))
+        #         l.append((s, int(n) + 1))
+        #     structuredFormula[i_structuredFormula] = l
+
+        convert = lambda l: (l[0], int(l[1])+1)
+        structuredFormula = (
+            list(map(lambda o: 
+                list(map(lambda a:
+                    convert(a.split('_')),
+                o.split('∧'))), 
+            structuredFormula)))
+
+        parent.formula = formula
+        parent.structuredFormula = structuredFormula
+
+
 
 
 if __name__ == '__main__':

@@ -24,31 +24,40 @@ class ReactionSystem():
     def cause(self, symbol):
         return self.A.cause(symbol)
 
-    def fbp(self, symbol, steps):
-        Reaction._check_symbol(symbol)
-        if not isinstance(steps, int) or steps < 0: raise ExceptionReactionSystem.InvalidNumber()
-        return to_dnf(self._fbs(self.cause(symbol), steps))
+    def fbp(self, symbols, steps):
+        symbolSet = Reaction._create_symbol_set(symbols)
+        formula = True
+        for symbol in symbolSet:
+            Reaction._check_symbol(symbol)
+            if not isinstance(steps, int) or steps < 0: raise ExceptionReactionSystem.InvalidNumber()
+            formula = to_dnf(And(formula, self._fbs(self.cause(symbol), steps)))
+        
+        return formula
 
 
     def _fbs(self, formula, i):
         if isinstance(formula, Symbol):
             if i > 0:
                 return Or(Symbol(str(formula) + '_' + str(i)), self._fbs(self.cause(str(formula)), i-1))
-            return Symbol(str(formula) + '_' + str(i))
+            formula = Symbol(str(formula) + '_' + str(i))
 
         elif isinstance(formula, Not):
-            return Not(self._fbs(formula.args[0], i))
+            formula = Not(self._fbs(formula.args[0], i))
 
         elif isinstance(formula, And):
-            return And(self._fbs(formula.args[0], i), self._fbs(formula.args[1], i))
+            formula = And(self._fbs(formula.args[0], i), self._fbs(formula.args[1], i))
 
         elif isinstance(formula, Or):
-            return Or(self._fbs(formula.args[0], i), self._fbs(formula.args[1], i))
+            formula = Or(self._fbs(formula.args[0], i), self._fbs(formula.args[1], i))
 
         elif isinstance(formula, bool):
-            return formula
+            pass
 
-        raise ExceptionReactionSystem.InvalidFormula()
+        else:
+            raise ExceptionReactionSystem.InvalidFormula()
+
+        return to_dnf(formula)
+
 
 
     def __eq__(self, other):
