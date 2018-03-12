@@ -320,15 +320,15 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
     def comboBoxFormulaType_currentIndexChanged(self, index):
         if index == 0:
             self.textBrowserFormula.setVisible(True)
-            self.listWidgetFormula.setVisible(False)
+            self.listFormula.setVisible(False)
             self.tableWidgetFormula.setVisible(False)
         elif index == 1:
             self.textBrowserFormula.setVisible(False)
-            self.listWidgetFormula.setVisible(True)
+            self.listFormula.setVisible(True)
             self.tableWidgetFormula.setVisible(False)
         elif index == 2:
             self.textBrowserFormula.setVisible(False)
-            self.listWidgetFormula.setVisible(False)
+            self.listFormula.setVisible(False)
             self.tableWidgetFormula.setVisible(True)
 
 
@@ -341,28 +341,49 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.labelLoadingImage.movie().stop()
 
         self.comboBoxFormulaType.setEnabled(True)
-        self.listWidgetFormula.setEnabled(True)
+        self.listFormula.setEnabled(True)
 
-        if not self.structuredFormula:
-            self.textBrowserFormula.setText(self.formula)
+        if not self.formula:
+            strFormula = str(self.formula)
+            self.textBrowserFormula.setText(strFormula)
 
-            self.listWidgetFormula.addItem(QtWidgets.QListWidgetItem(self.formula))
+            self.listFormula.addItem(QtWidgets.QListWidgetItem(strFormula))
     
             self.tableWidgetFormula.horizontalHeader().setVisible(False)
             self.tableWidgetFormula.setRowCount(1)
             self.tableWidgetFormula.setColumnCount(1)
-            self.tableWidgetFormula.setItem(0, 0, QtWidgets.QTableWidgetItem(self.formula))
+            self.tableWidgetFormula.setItem(0, 0, QtWidgets.QTableWidgetItem(strFormula))
             return
         
-        self.textBrowserFormula.setText(self.formula)  
 
-        for f in self.structuredFormula:
-            item = ''
+
+        stringFormula = ''
+        prebrackets = len(self.formula) > 1
+        for i in range(0, len(self.formula)):
+            if i > 0: stringFormula += ' ∨ '
+            backets = prebrackets and len(self.formula[i]) > 1
+            if backets: stringFormula += '('
+            for j in range(0, len(self.formula[i])):
+                if j > 0: stringFormula += ' ∧ '
+                n, s = self.formula[i][j]
+                stringFormula += '{}<sub>{}</sub>'.format(s, str(n))
+            if backets: stringFormula += ')'
+        self.textBrowserFormula.setText(stringFormula)
+                
+        
+        for f in self.formula:
+            string = ''
             for i in range(0, len(f)):
-                if i > 0: item += ' ∧ '
+                if i > 0: string += ' ∧ '
                 n, s = f[i]
-                item += '{}_{}'.format(s, str(n))
-            self.listWidgetFormula.addItem(QtWidgets.QListWidgetItem(item))
+                string += '{}<sub>{}</sub>'.format(s, str(n))
+
+            label = QtWidgets.QLabel(string)
+            label.setContentsMargins(4,2,4,2)
+            item = QtWidgets.QListWidgetItem()
+            item.setSizeHint(label.sizeHint())
+            self.listFormula.addItem(item)
+            self.listFormula.setItemWidget(item, label)
 
 
         self.tableWidgetFormula.setColumnCount(self.steps+1)
@@ -370,15 +391,19 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
             self.tableWidgetFormula.setHorizontalHeaderItem(i, QtWidgets.QTableWidgetItem(str(i+1)))
         self.tableWidgetFormula.setHorizontalHeaderItem(self.steps, QtWidgets.QTableWidgetItem(''))
 
-
-        self.tableWidgetFormula.setRowCount(len(self.structuredFormula))
-        for i in range(0, len(self.structuredFormula)):
+        self.tableWidgetFormula.setRowCount(len(self.formula))
+        for i in range(0, len(self.formula)):
             for j in range(0, self.steps):
                 self.tableWidgetFormula.setItem(i, j, QtWidgets.QTableWidgetItem())
-            for j in range(0, len(self.structuredFormula[i])):
-                n, s = self.structuredFormula[i][j]
+            for j in range(0, len(self.formula[i])):
+                n, s = self.formula[i][j]
+                cellWidget = self.tableWidgetFormula.cellWidget(i, n-1)
+                pre_text = (cellWidget.text() + ' ∧ ') if cellWidget != None else ''
+                label = QtWidgets.QLabel(pre_text + s)
+                label.setContentsMargins(4,2,4,2)
                 item = self.tableWidgetFormula.item(i, n-1)
-                item.setText(item.text() + ' ' + s)
+                item.setSizeHint(label.sizeHint())
+                self.tableWidgetFormula.setCellWidget(i, n-1, label)
 
         self.tableWidgetFormula.horizontalHeader().setResizeContentsPrecision(self.tableWidgetFormula.rowCount())
         self.tableWidgetFormula.resizeColumnsToContents()
@@ -421,8 +446,7 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
         formula = parent.rs.fbp(parent.symbols, int(parent.steps) - 1)
 
         if not formula:
-            parent.formula = str(formula)
-            parent.structuredFormula = False
+            parent.formula = False
             return
 
         formula = re.sub('\d+', # pylint: disable=W1401
@@ -434,29 +458,29 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
             .replace('&', '∧')
             .replace('|', '∨'))
 
-        structuredFormula = (formula
+        formula = (formula
             .replace(' ', '')
             .replace('(', '')
             .replace(')', '')
             .split('∨'))
 
         convert = lambda l: [int(l[1]), l[0]]
-        structuredFormula = (
+        formula = (
             list(map(lambda o: 
                 list(map(lambda a:
                     convert(a.split('_')),
                 o.split('∧'))), 
-            structuredFormula)))
+            formula)))
 
-        structuredFormula = (
+        formula = (
             list(map(lambda o: 
                 sorted(o),
-            structuredFormula)))
+            formula)))
 
-        structuredFormula.sort()
+        formula.sort()
 
         parent.formula = formula
-        parent.structuredFormula = structuredFormula
+        parent.formula = formula
 
 
 
