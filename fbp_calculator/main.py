@@ -20,6 +20,9 @@ from reactionsystem import \
     ReactionSystem, \
     ExceptionReactionSystem
 
+import thread_with_exc
+import threading
+
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def __init__(self, parent=None):
@@ -31,7 +34,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
  
         self.statusbarStyle = self.statusbar.styleSheet()
 
-        self.reaction_set = ReactionSet()
+        self.reaction_list = []
         
         self.current_file_name = ''
 
@@ -41,7 +44,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.lineEditProducts.setValidator(validatorLineEditSymbols)
         self.lineEditInhibitors.setValidator(validatorLineEditSymbols)
         self.lineEditCalculatorSymbols.setValidator(validatorLineEditSymbols)
-        self.lineEditCalculatorSteps.setValidator(QtGui.QIntValidator(0, 999))
+        self.lineEditCalculatorSteps.setValidator(QtGui.QIntValidator(0, 99))
 
         self.statusbar.messageChanged.connect(self.statusbarChanged)
 
@@ -78,7 +81,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         if not self.check_save():
             return
         self.current_file_name = ''
-        self.reaction_set.clear()
+        self.reaction_list.clear()
         self.listWidgetReactions.clear()
         self.actionSave.setEnabled(False)
 
@@ -97,19 +100,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             file.close()
             
             try:
-                reaction_set_opened = jsonpickle.decode(file_content)
+                reaction_list_opened = jsonpickle.decode(file_content)
             except Exception:
                 self.notify('Error: invalid file')
                 return
 
-            if not isinstance(reaction_set_opened, ReactionSet):
+
+            if not isinstance(reaction_list_opened, list) or \
+               not isinstance(ReactionSet(reaction_list_opened), ReactionSet):
                 self.notify('Error: invalid file')
                 return
 
-            self.reaction_set = reaction_set_opened
+            self.reaction_list = reaction_list_opened
             self.listWidgetReactions.clear()
 
-            for reaction in self.reaction_set:
+            for reaction in self.reaction_list:
                 self.listWidgetReactions_addReaction(reaction)
 
             self.actionSave.setEnabled(False)
@@ -135,7 +140,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def saveFile(self):
         if self.current_file_name:
             file = open(self.current_file_name, 'w')
-            file.write(jsonpickle.encode(self.reaction_set))
+            file.write(jsonpickle.encode(self.reaction_list))
             file.close()
             self.actionSave.setEnabled(False)
             self.notify('File ' + self.current_file_name + ' saved')
@@ -148,7 +153,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
 
     def check_save(self):
-        if self.actionSave.isEnabled() and len(self.reaction_set):
+        if self.actionSave.isEnabled() and len(self.reaction_list):
             buttonReply = QtWidgets.QMessageBox.warning(self,
                 'Save changes before closing?',
                 'Your changes will be lost if you don’t save them.',
@@ -182,11 +187,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             self._manageExceptionReactionSystem(e)
             return
 
-        if reaction in self.reaction_set:
+        if reaction in self.reaction_list:
             self.notify('Error: this reaction is already present')
             return
         
-        self.reaction_set.add(reaction)
+        self.reaction_list.append(reaction)
 
         self.listWidgetReactions_addReaction(reaction)
         self.notify('Added ' + str(reaction))
@@ -225,8 +230,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             if self.listWidgetReactions.item(i).checkState():
                 item = self.listWidgetReactions.takeItem(i)
                 splitted = re.split('⟶ | \|', item.text()) # pylint: disable=W1401
-                self.reaction_set.remove(Reaction(splitted[0], splitted[1],
-                        splitted[2] if len(splitted) == 3 else set()))
+                self.reaction_list.remove(Reaction(
+                    splitted[0], splitted[1], splitted[2]
+                    if len(splitted) == 3  else []))
                 self.listWidgetReactions._checked_item_number -= 1
             else: i += 1
         self.pushButtonDelete.setEnabled(False)
@@ -239,7 +245,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         if self.lineEditCalculatorSymbols.text() != '' \
                 and self.lineEditCalculatorSteps.text() != '' \
                 and int(self.lineEditCalculatorSteps.text()) != 0 \
-                and len(self.reaction_set):
+                and len(self.reaction_list):
             self.pushButtonCalculate.setEnabled(True)
         else:
             self.pushButtonCalculate.setEnabled(False)
@@ -289,20 +295,26 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.tableWidgetFormula.setVisible(False)
 
         self.symbols = deepcopy(parent.lineEditCalculatorSymbols.text())
-        self.steps = deepcopy(parent.lineEditCalculatorSteps.text())
-        self.rs = ReactionSystem(deepcopy(parent.reaction_set))
+        self.steps = int(deepcopy(parent.lineEditCalculatorSteps.text()))
+        self.rs = ReactionSystem(ReactionSet(deepcopy(parent.reaction_list)))
 
         self.lineEditSymbols.setText(self.symbols)
-        self.lineEditSteps.setText(self.steps)
+        self.lineEditSteps.setText(str(self.steps))
         
         self.labelLoadingImage.setMovie(QtGui.QMovie(":/loader.gif"))
         self.labelLoadingImage.movie().start()
 
         self.comboBoxFormulaType.currentIndexChanged.connect(self.comboBoxFormulaType_currentIndexChanged)
 
-        self.threadCalculateFBP = ThreadCalculateFBP(self)
-        self.threadCalculateFBP.finished.connect(self.threadCalculateFBP_finished)
-        self.threadCalculateFBP.start()
+        self.qthreadCalculateFBP = QThreadCalculateFBP(self)
+        self.qthreadCalculateFBP.finished.connect(self.qthreadCalculateFBP_finished)
+        self.qthreadCalculateFBP.start()
+
+
+    def closeEvent(self, event):
+        self.qthreadCalculateFBP.stop()
+        self.qthreadCalculateFBP.wait()
+        super(FormulaWindow, self).closeEvent(event)
 
     
     def comboBoxFormulaType_currentIndexChanged(self, index):
@@ -320,7 +332,10 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
             self.tableWidgetFormula.setVisible(True)
 
 
-    def threadCalculateFBP_finished(self):
+    def qthreadCalculateFBP_finished(self):
+        if self.qthreadCalculateFBP.stopped:
+            return
+
         self.labelComputing.setVisible(False)
         self.labelLoadingImage.setVisible(False)
         self.labelLoadingImage.movie().stop()
@@ -328,40 +343,93 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.comboBoxFormulaType.setEnabled(True)
         self.listWidgetFormula.setEnabled(True)
 
-        self.textBrowserFormula.setText(self.formula)
+        if not self.structuredFormula:
+            self.textBrowserFormula.setText(self.formula)
 
-        formula2 = (self.formula
-            .replace('(', '')
-            .replace(')', '')
-            .split(' ∨ '))
-
-        for f in formula2:
-            self.listWidgetFormula.addItem(QtWidgets.QListWidgetItem(f))
+            self.listWidgetFormula.addItem(QtWidgets.QListWidgetItem(self.formula))
+    
+            self.tableWidgetFormula.horizontalHeader().setVisible(False)
+            self.tableWidgetFormula.setRowCount(1)
+            self.tableWidgetFormula.setColumnCount(1)
+            self.tableWidgetFormula.setItem(0, 0, QtWidgets.QTableWidgetItem(self.formula))
+            return
+        
+        self.textBrowserFormula.setText(self.formula)  
 
         for f in self.structuredFormula:
             item = ''
-            for i in range(0, len(f)-1):
-                s, n = f[i]
-                item += '{}_{} ∧ '.format(s, str(n))
-            s, n = f[len(f)-1]
-            item += '{}_{}'.format(s, str(n))
+            for i in range(0, len(f)):
+                if i > 0: item += ' ∧ '
+                n, s = f[i]
+                item += '{}_{}'.format(s, str(n))
+            self.listWidgetFormula.addItem(QtWidgets.QListWidgetItem(item))
 
-            self.tableWidgetFormula.addItem(QtWidgets.QListWidgetItem(item))
+
+        self.tableWidgetFormula.setColumnCount(self.steps+1)
+        for i in range(0, self.steps):
+            self.tableWidgetFormula.setHorizontalHeaderItem(i, QtWidgets.QTableWidgetItem(str(i+1)))
+        self.tableWidgetFormula.setHorizontalHeaderItem(self.steps, QtWidgets.QTableWidgetItem(''))
+
+
+        self.tableWidgetFormula.setRowCount(len(self.structuredFormula))
+        for i in range(0, len(self.structuredFormula)):
+            for j in range(0, self.steps):
+                self.tableWidgetFormula.setItem(i, j, QtWidgets.QTableWidgetItem())
+            for j in range(0, len(self.structuredFormula[i])):
+                n, s = self.structuredFormula[i][j]
+                item = self.tableWidgetFormula.item(i, n-1)
+                item.setText(item.text() + ' ' + s)
+
+        self.tableWidgetFormula.horizontalHeader().setResizeContentsPrecision(self.tableWidgetFormula.rowCount())
+        self.tableWidgetFormula.resizeColumnsToContents()
+        self.tableWidgetFormula.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
         self.raise_()
 
 
 
-class ThreadCalculateFBP(QtCore.QThread):
+class QThreadCalculateFBP(QtCore.QThread):
+    stopped = False
+
+    def __init__(self, parent):
+        self.parent = parent
+        super(QThreadCalculateFBP, self).__init__()
+
+    def run(self):
+        self._thread = ThreadCalculateFBP(self.parent)
+        self._thread.setDaemon(True)
+        self._thread.start()
+        self._thread.join()
+
+    def stop(self):
+        self.stopped = True
+        try:
+            self._thread.terminate()
+        except threading.ThreadError as e:
+            if str(e) != 'the thread is not active': raise e
+
+
+class ThreadCalculateFBP(thread_with_exc.Thread):
     def __init__(self, parent):
         self.parent = parent
         super(ThreadCalculateFBP, self).__init__()
 
+
     def run(self):
         parent = self.parent
+
         formula = parent.rs.fbp(parent.symbols, int(parent.steps) - 1)
 
-        formula = (str(formula)
+        if not formula:
+            parent.formula = str(formula)
+            parent.structuredFormula = False
+            return
+
+        formula = re.sub('\d+', # pylint: disable=W1401
+            lambda n: str(int(n.group())+1),
+            str(formula)) 
+
+        formula = (formula
             .replace('~', '¬')
             .replace('&', '∧')
             .replace('|', '∨'))
@@ -372,15 +440,7 @@ class ThreadCalculateFBP(QtCore.QThread):
             .replace(')', '')
             .split('∨'))
 
-        # for i_structuredFormula in range(0, len(structuredFormula)):
-        #     andListFormula = structuredFormula[i_structuredFormula].split('∧')
-        #     l = []
-        #     for i_andListFormula in range(0, len(andListFormula)):
-        #         s, n = tuple(andListFormula[i_andListFormula].split('_'))
-        #         l.append((s, int(n) + 1))
-        #     structuredFormula[i_structuredFormula] = l
-
-        convert = lambda l: (l[0], int(l[1])+1)
+        convert = lambda l: [int(l[1]), l[0]]
         structuredFormula = (
             list(map(lambda o: 
                 list(map(lambda a:
@@ -388,14 +448,19 @@ class ThreadCalculateFBP(QtCore.QThread):
                 o.split('∧'))), 
             structuredFormula)))
 
+        structuredFormula = (
+            list(map(lambda o: 
+                sorted(o),
+            structuredFormula)))
+
+        structuredFormula.sort()
+
         parent.formula = formula
         parent.structuredFormula = structuredFormula
 
 
 
-
 if __name__ == '__main__':
-    sys.setrecursionlimit(10000)
     app = QtWidgets.QApplication(sys.argv)
     mainWindow = MainWindow()
 
