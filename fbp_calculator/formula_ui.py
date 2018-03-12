@@ -86,6 +86,7 @@ class Ui_DialogFBP(object):
         self.tableWidgetFormula.setObjectName("tableWidgetFormula")
         self.tableWidgetFormula.setColumnCount(0)
         self.tableWidgetFormula.setRowCount(0)
+        self.tableWidgetFormula.horizontalHeader().setCascadingSectionResizes(True)
         self.tableWidgetFormula.horizontalHeader().setDefaultSectionSize(0)
         self.tableWidgetFormula.horizontalHeader().setMinimumSectionSize(0)
         self.tableWidgetFormula.horizontalHeader().setStretchLastSection(True)
@@ -96,9 +97,10 @@ class Ui_DialogFBP(object):
         self.listFormula = QtWidgets.QListWidget(DialogFBP)
         self.listFormula.setEnabled(False)
         self.listFormula.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.listFormula.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.listFormula.setAlternatingRowColors(True)
         self.listFormula.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
-        self.listFormula.setUniformItemSizes(True)
+        self.listFormula.setUniformItemSizes(False)
         self.listFormula.setObjectName("listFormula")
         self.gridLayout.addWidget(self.listFormula, 5, 0, 1, 2)
 
@@ -108,7 +110,7 @@ class Ui_DialogFBP(object):
 
     def retranslateUi(self, DialogFBP):
         _translate = QtCore.QCoreApplication.translate
-        DialogFBP.setWindowTitle(_translate("DialogFBP", "Formula based predictor"))
+        DialogFBP.setWindowTitle(_translate("DialogFBP", " "))
         self.labelSteps.setText(_translate("DialogFBP", "Steps:"))
         self.comboBoxFormulaType.setItemText(0, _translate("DialogFBP", "Formula"))
         self.comboBoxFormulaType.setItemText(1, _translate("DialogFBP", "List of or"))

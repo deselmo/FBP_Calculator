@@ -379,7 +379,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
                 string += '{}<sub>{}</sub>'.format(s, str(n))
 
             label = QtWidgets.QLabel(string)
-            label.setContentsMargins(4,2,4,2)
+            label.setContentsMargins(4,4,4,4)
             item = QtWidgets.QListWidgetItem()
             item.setSizeHint(label.sizeHint())
             self.listFormula.addItem(item)
