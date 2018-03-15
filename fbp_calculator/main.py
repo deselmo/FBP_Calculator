@@ -407,7 +407,8 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
                 cellWidget = self.tableWidgetFormula.cellWidget(i, n-1)
                 pre_text = (cellWidget.text() + ' ∧ ') if cellWidget != None else ''
                 label = QtWidgets.QLabel(pre_text + s)
-                label.setContentsMargins(4,2,4,2)
+                label.setContentsMargins(8,2,8,2)
+                label.setAlignment(QtCore.Qt.AlignCenter)
                 item = self.tableWidgetFormula.item(i, n-1)
                 item.setSizeHint(label.sizeHint())
                 self.tableWidgetFormula.setCellWidget(i, n-1, label)
