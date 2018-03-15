@@ -82,8 +82,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             return
         self.current_file_name = ''
         self.reaction_list.clear()
-        self.listWidgetReactions.clear()
-        self.actionSave.setEnabled(False)
+        self.listWidgetReactions_clear()
 
 
     def actionOpen_triggered(self, value=None):
@@ -94,31 +93,32 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
                 'Open a Reaction System file', 
                 '',
                 'JSON files (*.json)')
-        if self.current_file_name:
-            file = open(self.current_file_name, 'r')
-            file_content = file.read()
-            file.close()
-            
-            try:
-                reaction_list_opened = jsonpickle.decode(file_content)
-            except Exception:
-                self.notify('Error: invalid file')
-                return
+        if not self.current_file_name:
+            return
+
+        file = open(self.current_file_name, 'r')
+        file_content = file.read()
+        file.close()
+        
+        try:
+            reaction_list_opened = jsonpickle.decode(file_content)
+        except Exception:
+            self.notify('Error: invalid file')
+            return
 
 
-            if not isinstance(reaction_list_opened, list) or \
-               not isinstance(ReactionSet(reaction_list_opened), ReactionSet):
-                self.notify('Error: invalid file')
-                return
+        if not isinstance(reaction_list_opened, list) or \
+            not isinstance(ReactionSet(reaction_list_opened), ReactionSet):
+            self.notify('Error: invalid file')
+            return
 
-            self.reaction_list = reaction_list_opened
-            self.listWidgetReactions.clear()
+        self.reaction_list = reaction_list_opened
+        self.listWidgetReactions_clear()
 
-            for reaction in self.reaction_list:
-                self.listWidgetReactions_addReaction(reaction)
+        for reaction in self.reaction_list:
+            self.listWidgetReactions_addReaction(reaction)
 
-            self.actionSave.setEnabled(False)
-            self.notify('File ' + self.current_file_name + ' opened')
+        self.notify('File ' + self.current_file_name + ' opened')
 
 
     def actionSave_triggered(self, value=None):
@@ -223,6 +223,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             if not self.listWidgetReactions._checked_item_number:
                 self.pushButtonDelete.setEnabled(False)
     
+
+    def listWidgetReactions_clear(self):
+        self.listWidgetReactions.clear()
+        self.listWidgetReactions._checked_item_number = 0
+        self.pushButtonDelete.setEnabled(False)
+        self.actionSave.setEnabled(False)
+
 
     def pushButtonDelete_clicked(self):
         i = 0
