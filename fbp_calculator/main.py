@@ -381,7 +381,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         for f in self.formula:
             string = ''
             for i in range(0, len(f)):
-                if i > 0: string += ' ∧ '
+                if i > 0: string += ' '
                 n, s = f[i]
                 string += '{}<sub>{}</sub>'.format(s, str(n))
 
@@ -405,7 +405,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
             for j in range(0, len(self.formula[i])):
                 n, s = self.formula[i][j]
                 cellWidget = self.tableWidgetFormula.cellWidget(i, n-1)
-                pre_text = (cellWidget.text() + ' ∧ ') if cellWidget != None else ''
+                pre_text = (cellWidget.text() + ' ') if cellWidget != None else ''
                 label = QtWidgets.QLabel(pre_text + s)
                 label.setContentsMargins(8,2,8,2)
                 label.setAlignment(QtCore.Qt.AlignCenter)

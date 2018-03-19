@@ -2,7 +2,6 @@ from sympy import Symbol
 from sympy import Not
 from sympy import And
 from sympy import Or
-from sympy import to_dnf
 
 from .exceptions import ExceptionReactionSystem
 
