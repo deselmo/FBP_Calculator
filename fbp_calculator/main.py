@@ -4,6 +4,7 @@
 
 import sys
 import os
+import resource
 import re
 from copy import deepcopy
 
@@ -25,8 +26,10 @@ import threading
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
-    def __init__(self, parent=None):
+    def __init__(self, app, parent=None):
         super(MainWindow, self).__init__(parent)
+
+        self.app = app
 
         self.setupUi(self)
 
@@ -44,7 +47,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.lineEditProducts.setValidator(validatorLineEditSymbols)
         self.lineEditInhibitors.setValidator(validatorLineEditSymbols)
         self.lineEditCalculatorSymbols.setValidator(validatorLineEditSymbols)
-        self.lineEditCalculatorSteps.setValidator(QtGui.QIntValidator(0, 99))
+        self.lineEditCalculatorSteps.setValidator(QtGui.QIntValidator(0, 2**31-1))
 
         self.statusbar.messageChanged.connect(self.statusbarChanged)
 
@@ -66,6 +69,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.actionQuit.triggered.connect(self.actionQuit_triggered)
 
         self.actionAbout.triggered.connect(self.actionAbout_triggered)
+
+
+        self.setGeometry(
+            QtWidgets.QStyle.alignedRect(
+                QtCore.Qt.LeftToRight,
+                QtCore.Qt.AlignCenter,
+                self.size(),
+                self.app.desktop().availableGeometry()))
 
 
     def pushButtonCalculate_clicked(self):
@@ -491,17 +502,15 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
         parent.formula = formula
 
 
+def increase_recursion_limit():
+    resource.setrlimit(resource.RLIMIT_STACK, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
+    sys.setrecursionlimit(2**31-1)
+    
 
 if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    mainWindow = MainWindow()
+    increase_recursion_limit()
 
-    mainWindow.setGeometry(
-        QtWidgets.QStyle.alignedRect(
-            QtCore.Qt.LeftToRight,
-            QtCore.Qt.AlignCenter,
-            mainWindow.size(),
-            app.desktop().availableGeometry()))
-    
+    app = QtWidgets.QApplication(sys.argv)
+    mainWindow = MainWindow(app)
     mainWindow.show()
     sys.exit(app.exec_())
