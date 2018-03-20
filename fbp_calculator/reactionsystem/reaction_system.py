@@ -2,7 +2,7 @@ from sympy import Symbol
 from sympy import Not
 from sympy import And
 from sympy import Or
-from sympy import to_dnf
+from sympy import simplify_logic
 
 from .reaction import Reaction
 from .reaction_set import ReactionSet
@@ -30,7 +30,7 @@ class ReactionSystem():
         for symbol in symbolSet:
             Reaction._check_symbol(symbol)
             if not isinstance(steps, int) or steps < 0: raise ExceptionReactionSystem.InvalidNumber()
-            formula = to_dnf(And(formula, self._fbs(self.cause(symbol), steps)))
+            formula = simplify_logic(And(formula, self._fbs(self.cause(symbol), steps)), form='dnf', deep=False)
         
         return formula
 
@@ -56,7 +56,7 @@ class ReactionSystem():
         else:
             raise ExceptionReactionSystem.InvalidFormula()
 
-        return to_dnf(formula)
+        return simplify_logic(formula, form='dnf', deep=False)
 
 
 
