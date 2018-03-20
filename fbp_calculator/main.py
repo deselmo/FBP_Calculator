@@ -91,7 +91,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
                 return
 
 
-        FormulaWindow(self).show()
+        FormulaWindow(self).exec_()
 
 
     def closeEvent(self, event):
@@ -280,7 +280,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             self.tableWidgetProperties.setEnabled(True)
         
             steps = self.spinBoxCalculatorSteps.value()
-            steps = steps if steps < 100 else 100
+            columns = self.tableWidgetProperties.columnCount()
+
+            if steps > 100 and steps > columns:
+                steps = columns+1
+            else:
+                steps = steps if steps < 100 else 100
+
             self.tableWidgetProperties.setColumnCount(steps)
             for i in range(0, steps):
                 self.tableWidgetProperties.setHorizontalHeaderItem(i, QtWidgets.QTableWidgetItem(str(i+1)))
