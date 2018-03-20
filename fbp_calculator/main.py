@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 # -*- coding: utf-8 -*-
 
 import sys
@@ -29,8 +28,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def __init__(self, app, parent=None):
         super(MainWindow, self).__init__(parent)
 
-        self.app = app
-
         self.setupUi(self)
 
         self._translate = QtCore.QCoreApplication.translate
@@ -41,13 +38,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         
         self.current_file_name = ''
 
-        validatorLineEditSymbols = QtGui.QRegExpValidator(QtCore.QRegExp("^[a-zA-Z ]+$")) # pylint: disable=W1401
+        self.validatorLineEditSymbols = QtGui.QRegExpValidator(QtCore.QRegExp("^[a-zA-Z ]+$")) # pylint: disable=W1401
 
-        self.lineEditReactants.setValidator(validatorLineEditSymbols)
-        self.lineEditProducts.setValidator(validatorLineEditSymbols)
-        self.lineEditInhibitors.setValidator(validatorLineEditSymbols)
-        self.lineEditCalculatorSymbols.setValidator(validatorLineEditSymbols)
-        self.lineEditCalculatorSteps.setValidator(QtGui.QIntValidator(0, 2**31-1))
+        self.lineEditReactants.setValidator(self.validatorLineEditSymbols)
+        self.lineEditProducts.setValidator(self.validatorLineEditSymbols)
+        self.lineEditInhibitors.setValidator(self.validatorLineEditSymbols)
+        self.lineEditCalculatorSymbols.setValidator(self.validatorLineEditSymbols)
 
         self.statusbar.messageChanged.connect(self.statusbarChanged)
 
@@ -60,7 +56,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.listWidgetReactions._checked_item_number = 0
         self.listWidgetReactions.itemChanged.connect(self.listWidgetReactions_itemChanged)
         self.lineEditCalculatorSymbols.textChanged.connect(self.pushButtonCalculate_enable)
-        self.lineEditCalculatorSteps.textChanged.connect(self.pushButtonCalculate_enable)
+        self.spinBoxCalculatorSteps.valueChanged.connect(self.pushButtonCalculate_enable)
 
         self.actionNew.triggered.connect(self.actionNew_triggered)
         self.actionOpen.triggered.connect(self.actionOpen_triggered)
@@ -69,17 +65,32 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.actionQuit.triggered.connect(self.actionQuit_triggered)
 
         self.actionAbout.triggered.connect(self.actionAbout_triggered)
+        self.tableWidgetProperties.horizontalScrollBar().valueChanged.connect(self.tableWidgetProperties_scrollBar_valueChanged)
 
+
+        self.tableWidgetProperties.setCellWidget(0, 0, QtWidgets.QLineEdit())
+        self.tableWidgetProperties.setCellWidget(1, 0, QtWidgets.QLineEdit())
 
         self.setGeometry(
             QtWidgets.QStyle.alignedRect(
                 QtCore.Qt.LeftToRight,
                 QtCore.Qt.AlignCenter,
                 self.size(),
-                self.app.desktop().availableGeometry()))
+                app.desktop().availableGeometry()))
 
 
     def pushButtonCalculate_clicked(self):
+        steps = self.tableWidgetProperties.columnCount()
+
+        for j in range(0, steps):
+            symbols_true = Reaction._create_symbol_set(self.tableWidgetProperties.cellWidget(0, j).text())
+            symbols_false = Reaction._create_symbol_set(self.tableWidgetProperties.cellWidget(1, j).text())
+            intersectionSet = symbols_true.intersection(symbols_false)
+            if len(intersectionSet):
+                self.notify('Error in context properties step {}: {}'.format(str(j+1), ' '.join(intersectionSet)))
+                return
+
+
         FormulaWindow(self).show()
 
 
@@ -240,6 +251,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.listWidgetReactions._checked_item_number = 0
         self.pushButtonDelete.setEnabled(False)
         self.actionSave.setEnabled(False)
+        self.pushButtonCalculate_enable()
 
 
     def pushButtonDelete_clicked(self):
@@ -261,13 +273,58 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     
     def pushButtonCalculate_enable(self, string=None):
         if self.lineEditCalculatorSymbols.text() != '' \
-                and self.lineEditCalculatorSteps.text() != '' \
-                and int(self.lineEditCalculatorSteps.text()) != 0 \
+                and self.spinBoxCalculatorSteps.value() != 0 \
                 and len(self.reaction_list):
             self.pushButtonCalculate.setEnabled(True)
+
+            self.tableWidgetProperties.setEnabled(True)
+        
+            steps = self.spinBoxCalculatorSteps.value()
+            steps = steps if steps < 100 else 100
+            self.tableWidgetProperties.setColumnCount(steps)
+            for i in range(0, steps):
+                self.tableWidgetProperties.setHorizontalHeaderItem(i, QtWidgets.QTableWidgetItem(str(i+1)))
+
+            for i in range(0, 2):
+                for j in range(0, steps):
+                    if isinstance(self.tableWidgetProperties.cellWidget(i, j), QtWidgets.QLineEdit):
+                        continue
+                    self.tableWidgetProperties.setItem(i, j, QtWidgets.QTableWidgetItem())
+                    lineEdit = QtWidgets.QLineEdit()
+                    lineEdit.setValidator(self.validatorLineEditSymbols)
+                    lineEdit.returnPressed.connect(self.pushButtonCalculate.click)
+                    self.tableWidgetProperties.setCellWidget(i, j, lineEdit)
+
+                self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
         else:
             self.pushButtonCalculate.setEnabled(False)
+            self.tableWidgetProperties.setEnabled(False)
 
+    def tableWidgetProperties_scrollBar_valueChanged(self, value):
+        if self.tableWidgetProperties.isEnabled() and \
+                value == self.tableWidgetProperties.horizontalScrollBar().maximum():
+
+            steps = self.spinBoxCalculatorSteps.value()
+            columns = self.tableWidgetProperties.columnCount()
+            steps = steps if steps < columns+100 else columns+100
+
+            self.tableWidgetProperties.setColumnCount(steps)
+            for i in range(columns, steps):
+                self.tableWidgetProperties.setHorizontalHeaderItem(i, QtWidgets.QTableWidgetItem(str(i+1)))
+
+            for i in range(0, 2):
+                for j in range(columns, steps):
+                    if isinstance(self.tableWidgetProperties.cellWidget(i, j), QtWidgets.QLineEdit):
+                        continue
+                    self.tableWidgetProperties.setItem(i, j, QtWidgets.QTableWidgetItem())
+                    lineEdit = QtWidgets.QLineEdit()
+                    lineEdit.setValidator(self.validatorLineEditSymbols)
+                    lineEdit.returnPressed.connect(self.pushButtonCalculate.click)
+                    self.tableWidgetProperties.setCellWidget(i, j, lineEdit)
+
+                self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        
 
     def statusbarChanged(self, string):
         if string and string[0:5] == 'Error':
@@ -277,7 +334,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
 
     def notify(self, message):
-        self.statusbar.showMessage(message, msecs=2000)
+        self.statusbar.showMessage(message, msecs=4000)
 
         
     def _manageExceptionReactionSystem(self, e):
@@ -312,9 +369,24 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.textBrowserFormula.setVisible(False)
         self.tableWidgetFormula.setVisible(False)
 
-        self.symbols = deepcopy(parent.lineEditCalculatorSymbols.text())
-        self.steps = int(deepcopy(parent.lineEditCalculatorSteps.text()))
+        self.symbols = parent.lineEditCalculatorSymbols.text()
+        self.steps = parent.spinBoxCalculatorSteps.value()
         self.rs = ReactionSystem(ReactionSet(deepcopy(parent.reaction_list)))
+        
+        columnCount = parent.tableWidgetProperties.columnCount()
+
+        self.context_true_set = set()
+        self.context_false_set = set()
+
+        for j in range(0, columnCount):
+            symbols_true = Reaction._create_symbol_set(parent.tableWidgetProperties.cellWidget(0, j).text())
+            for symbol in symbols_true:
+                self.context_true_set.add((j, symbol))
+            
+            symbols_false = Reaction._create_symbol_set(parent.tableWidgetProperties.cellWidget(1, j).text())
+            for symbol in symbols_false:
+                self.context_false_set.add((j, symbol))
+
 
         self.lineEditSymbols.setText(self.symbols)
         self.lineEditSteps.setText(str(self.steps))
@@ -361,7 +433,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.comboBoxFormulaType.setEnabled(True)
         self.listFormula.setEnabled(True)
 
-        if not self.formula:
+        if self.formula == False or self.formula == True:
             strFormula = str(self.formula)
             self.textBrowserFormula.setText(strFormula)
 
@@ -423,13 +495,13 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
                 item = self.tableWidgetFormula.item(i, n-1)
                 item.setSizeHint(label.sizeHint())
                 self.tableWidgetFormula.setCellWidget(i, n-1, label)
+                
 
         self.tableWidgetFormula.horizontalHeader().setResizeContentsPrecision(self.tableWidgetFormula.rowCount())
         self.tableWidgetFormula.resizeColumnsToContents()
         self.tableWidgetFormula.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
         self.raise_()
-
 
 
 class QThreadCalculateFBP(QtCore.QThread):
@@ -462,11 +534,12 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
     def run(self):
         parent = self.parent
 
-        formula = parent.rs.fbp(parent.symbols, int(parent.steps) - 1)
+        formula = parent.rs.fbp(parent.symbols, parent.steps-1, parent.context_true_set, parent.context_false_set)
 
-        if not formula:
-            parent.formula = False
+        if formula == False or formula == True:
+            parent.formula = formula
             return
+
 
         formula = re.sub('\d+', # pylint: disable=W1401
             lambda n: str(int(n.group())+1),
@@ -499,7 +572,6 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
         formula.sort()
 
         parent.formula = formula
-        parent.formula = formula
 
 
 def increase_recursion_limit():
@@ -509,7 +581,6 @@ def increase_recursion_limit():
 
 if __name__ == '__main__':
     increase_recursion_limit()
-
     app = QtWidgets.QApplication(sys.argv)
     mainWindow = MainWindow(app)
     mainWindow.show()
