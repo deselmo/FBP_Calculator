@@ -1,4 +1,7 @@
-from pyeda.inter import *
+from pyeda.inter import expr
+from pyeda.inter import exprvar
+from pyeda.inter import Not
+from pyeda.inter import And
 
 from .exceptions import ExceptionReactionSystem
 

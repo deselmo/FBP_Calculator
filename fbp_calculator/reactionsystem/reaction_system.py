@@ -1,5 +1,15 @@
-from pyeda.inter import *
-from pyeda.boolalg.expr import *
+from pyeda.inter import expr
+from pyeda.inter import exprvar
+from pyeda.inter import Not
+from pyeda.inter import And
+from pyeda.inter import Or
+from pyeda.boolalg.expr import Constant
+from pyeda.boolalg.expr import Literal
+from pyeda.boolalg.expr import Variable
+from pyeda.boolalg.expr import Complement
+from pyeda.boolalg.expr import NotOp
+from pyeda.boolalg.expr import AndOp
+from pyeda.boolalg.expr import OrOp
 
 from .reaction import Reaction
 from .reaction_set import ReactionSet

@@ -1,4 +1,5 @@
-from pyeda.inter import *
+from pyeda.inter import expr
+from pyeda.inter import Or
 
 from .reaction import Reaction
 from .exceptions import ExceptionReactionSystem

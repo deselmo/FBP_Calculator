@@ -23,11 +23,20 @@ from reactionsystem import \
 import thread_with_exc
 import threading
 
-from pyeda.boolalg.expr import *
+from pyeda.inter import Not
+from pyeda.boolalg.expr import Constant
+from pyeda.boolalg.expr import Literal
+from pyeda.boolalg.expr import Variable
+from pyeda.boolalg.expr import Complement
+from pyeda.boolalg.expr import NotOp
+from pyeda.boolalg.expr import AndOp
+from pyeda.boolalg.expr import OrOp
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def __init__(self, app, parent=None):
+        self.blabla = 1
+
         super(MainWindow, self).__init__(parent)
 
         self.setupUi(self)
@@ -378,10 +387,13 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         super(FormulaWindow, self).__init__(parent)
         self.setupUi(self)
 
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+
         self.comboBoxFormulaType.setCurrentIndex(1)
         self.textBrowserFormula.setVisible(False)
         self.tableWidgetFormula.setVisible(False)
 
+        self.parent = parent
         self.symbols = parent.lineEditCalculatorSymbols.text()
         self.steps = parent.spinBoxCalculatorSteps.value()
         self.rs = ReactionSystem(ReactionSet(deepcopy(parent.reaction_list)))
@@ -417,7 +429,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
     def closeEvent(self, event):
         self.qthreadCalculateFBP.stop()
         self.qthreadCalculateFBP.wait()
-        super(FormulaWindow, self).closeEvent(event)
+        event.accept()
 
     
     def comboBoxFormulaType_currentIndexChanged(self, index):
@@ -442,7 +454,8 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         try:
             self.formula
         except NameError:
-            self.notify('Error in fbp calculation')
+            self.parent.notify('Error in fbp calculation')
+            self.close()
             return
 
         self.labelComputing.setVisible(False)
@@ -562,7 +575,18 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
         for formula_x in formula.xs:
             formula_list_and.append(ThreadCalculateFBP.case_literal(formula_x))
         return formula_list_and
-            
+
+    @staticmethod
+    def case_orOp(formula):
+        formula_list_or = []
+        for formula_and in formula.xs:
+            if isinstance(formula_and, Literal):
+                formula_list_or.append([ThreadCalculateFBP.case_literal(formula_and)])
+            elif isinstance(formula_and, AndOp):
+                formula_list_or.append(ThreadCalculateFBP.case_andOp(formula_and))
+        return formula_list_or
+        
+        
 
     def run(self):
         parent = self.parent
@@ -574,16 +598,14 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
             parent.formula = formula.VALUE
             return
 
-        formula_list_or = []
         if isinstance(formula, Literal):
-            formula_list_or.append([ThreadCalculateFBP.case_literal(formula)])
+            formula_list_or = [[ThreadCalculateFBP.case_literal(formula)]]
 
         elif isinstance(formula, AndOp):
-            formula_list_or.append(ThreadCalculateFBP.case_andOp(formula))
+            formula_list_or = [ThreadCalculateFBP.case_andOp(formula)]
 
         elif isinstance(formula, OrOp):
-            for formula_and in formula.xs:
-                formula_list_or.append(ThreadCalculateFBP.case_andOp(formula_and))
+            formula_list_or = ThreadCalculateFBP.case_orOp(formula)
         
         formula_list_or.sort()
         parent.formula = formula_list_or
