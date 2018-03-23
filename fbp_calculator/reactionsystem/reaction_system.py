@@ -1,40 +1,10 @@
-from sympy import Symbol
-from sympy import Not
-from sympy import And
-from sympy import Or
-from sympy import to_dnf
+from pyeda.inter import *
+from pyeda.boolalg.expr import *
 
 from .reaction import Reaction
 from .reaction_set import ReactionSet
 from .exceptions import ExceptionReactionSystem
 
-
-def simplify_dnf(formula):
-    if formula == True or formula == False:
-        return formula
-
-    str_formula = (str(to_dnf(formula))
-            .replace(' ', '')
-            .replace('(', '')
-            .replace(')', '')
-            .split('|'))
-
-    dnf_formula = list(map(lambda o: set(o.split('&')), str_formula))
-
-    for current_formula in dnf_formula[:]:
-        for compare_formula in dnf_formula:
-            if current_formula > compare_formula:
-                dnf_formula.remove(current_formula)
-                break
-
-    or_formula = False
-    for current_formula in dnf_formula:
-        and_formula = True
-        for symbol in current_formula:
-            and_formula = And(and_formula, Symbol(symbol))
-        or_formula = Or(or_formula, and_formula)
-
-    return or_formula
 
 
 class ReactionSystem():
@@ -62,33 +32,39 @@ class ReactionSystem():
         for symbol in symbolSet:
             Reaction._check_symbol(symbol)
             if not isinstance(steps, int) or steps < 0: raise ExceptionReactionSystem.InvalidNumber()
-            formula = simplify_dnf(And(formula, self._fbs(self.cause(symbol), steps)))
+            formula = And(formula, self._fbs(self.cause(symbol), steps))
         
-        return formula
+        return formula.to_dnf()
 
 
     def _fbs(self, formula, i):
-        if isinstance(formula, Symbol):
-            symbol = str(formula)
-            if (i, symbol) in self._context_true_set:
-                formula = True
-            elif (i, symbol) in self._context_false_set:
-                formula = False
-            else:
-                formula = Symbol(symbol + '_' + str(i))
+        if isinstance(formula, Constant):
+            formula_result = formula
+
+        elif isinstance(formula, Variable):
+            symbol = formula.name
+            formula_result = exprvar(symbol, i)
             if i > 0:
-                formula = Or(formula, self._fbs(self.cause(symbol), i-1))
+                formula_result = Or(formula_result, self._fbs(self.cause(symbol), i-1))
 
-        elif isinstance(formula, Not):
-            formula = Not(self._fbs(formula.args[0], i))
+        elif isinstance(formula, Complement) or isinstance(formula, NotOp):
+            formula_result = Not(self._fbs(Not(formula), i))
 
-        elif isinstance(formula, And):
-            formula = And(self._fbs(formula.args[0], i), self._fbs(formula.args[1], i))
+        elif isinstance(formula, AndOp):
+            formula_result = expr(True)
+            for formula_x in formula.xs:
+                formula_result = And(formula_result, self._fbs(formula_x, i))
 
-        elif isinstance(formula, Or):
-            formula = Or(self._fbs(formula.args[0], i), self._fbs(formula.args[1], i))
+        elif isinstance(formula, OrOp):
+            formula_result = expr(False)
+            for formula_x in formula.xs:
+                formula_result = Or(formula_result, self._fbs(formula_x, i))
 
-        return simplify_dnf(formula)
+        else:
+            print('error ' + str(type(formula)))
+            return False
+
+        return formula_result
 
 
 

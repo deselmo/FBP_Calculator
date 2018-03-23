@@ -23,6 +23,8 @@ from reactionsystem import \
 import thread_with_exc
 import threading
 
+from pyeda.boolalg.expr import *
+
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def __init__(self, app, parent=None):
@@ -65,11 +67,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.actionQuit.triggered.connect(self.actionQuit_triggered)
 
         self.actionAbout.triggered.connect(self.actionAbout_triggered)
+
         self.tableWidgetProperties.horizontalScrollBar().valueChanged.connect(self.tableWidgetProperties_scrollBar_valueChanged)
-
-
         self.tableWidgetProperties.setCellWidget(0, 0, QtWidgets.QLineEdit())
         self.tableWidgetProperties.setCellWidget(1, 0, QtWidgets.QLineEdit())
+        self.tableWidgetProperties.chunck_size = 100
 
         self.setGeometry(
             QtWidgets.QStyle.alignedRect(
@@ -91,7 +93,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
                 return
 
 
-        FormulaWindow(self).exec_()
+        FormulaWindow(self).show()
 
 
     def closeEvent(self, event):
@@ -281,16 +283,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         
             steps = self.spinBoxCalculatorSteps.value()
             columns = self.tableWidgetProperties.columnCount()
+            chunk_size = self.tableWidgetProperties.chunck_size
 
-            if steps > 100 and steps > columns:
+            if steps > chunk_size and steps > columns:
                 steps = columns+1
             else:
-                steps = steps if steps < 100 else 100
+                steps = steps if steps < chunk_size else chunk_size
 
             self.tableWidgetProperties.setColumnCount(steps)
             for i in range(0, steps):
                 self.tableWidgetProperties.setHorizontalHeaderItem(i, QtWidgets.QTableWidgetItem(str(i+1)))
-
             for i in range(0, 2):
                 for j in range(0, steps):
                     if isinstance(self.tableWidgetProperties.cellWidget(i, j), QtWidgets.QLineEdit):
@@ -308,12 +310,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             self.tableWidgetProperties.setEnabled(False)
 
     def tableWidgetProperties_scrollBar_valueChanged(self, value):
-        if self.tableWidgetProperties.isEnabled() and \
-                value == self.tableWidgetProperties.horizontalScrollBar().maximum():
+        if (self.tableWidgetProperties.isEnabled() and
+                value == self.tableWidgetProperties.horizontalScrollBar().maximum()):
 
             steps = self.spinBoxCalculatorSteps.value()
             columns = self.tableWidgetProperties.columnCount()
-            steps = steps if steps < columns+100 else columns+100
+            chunk_size = self.tableWidgetProperties.chunck_size
+            steps = steps if steps < columns+chunk_size else columns+chunk_size
+
+            if steps == self.tableWidgetProperties.columnCount():
+                return
 
             self.tableWidgetProperties.setColumnCount(steps)
             for i in range(columns, steps):
@@ -328,8 +334,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
                     lineEdit.setValidator(self.validatorLineEditSymbols)
                     lineEdit.returnPressed.connect(self.pushButtonCalculate.click)
                     self.tableWidgetProperties.setCellWidget(i, j, lineEdit)
-
                 self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
+                
         
 
     def statusbarChanged(self, string):
@@ -432,6 +439,12 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         if self.qthreadCalculateFBP.stopped:
             return
 
+        try:
+            self.formula
+        except NameError:
+            self.notify('Error in fbp calculation')
+            return
+
         self.labelComputing.setVisible(False)
         self.labelLoadingImage.setVisible(False)
         self.labelLoadingImage.movie().stop()
@@ -439,7 +452,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.comboBoxFormulaType.setEnabled(True)
         self.listFormula.setEnabled(True)
 
-        if self.formula == False or self.formula == True:
+        if isinstance(self.formula, bool):
             strFormula = str(self.formula)
             self.textBrowserFormula.setText(strFormula)
 
@@ -451,8 +464,6 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
             self.tableWidgetFormula.setItem(0, 0, QtWidgets.QTableWidgetItem(strFormula))
             return
         
-
-
         stringFormula = ''
         prebrackets = len(self.formula) > 1
         for i in range(0, len(self.formula)):
@@ -537,47 +548,45 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
         super(ThreadCalculateFBP, self).__init__()
 
 
+    @staticmethod
+    def case_literal(formula):
+        if isinstance(formula, Complement):
+            formula = Not(formula)
+            return [formula.indices[0]+1, '¬'+formula.name]
+        else:
+            return [formula.indices[0]+1, formula.name]
+
+    @staticmethod
+    def case_andOp(formula):
+        formula_list_and = []
+        for formula_x in formula.xs:
+            formula_list_and.append(ThreadCalculateFBP.case_literal(formula_x))
+        return formula_list_and
+            
+
     def run(self):
         parent = self.parent
 
-        formula = parent.rs.fbp(parent.symbols, parent.steps-1, parent.context_true_set, parent.context_false_set)
+        # formula = parent.rs.fbp(parent.symbols, parent.steps-1, parent.context_true_set, parent.context_false_set)
+        formula = parent.rs.fbp(parent.symbols, parent.steps-1)
 
-        if formula == False or formula == True:
-            parent.formula = formula
+        if isinstance(formula, Constant):
+            parent.formula = formula.VALUE
             return
 
+        formula_list_or = []
+        if isinstance(formula, Literal):
+            formula_list_or.append([ThreadCalculateFBP.case_literal(formula)])
 
-        formula = re.sub('\d+', # pylint: disable=W1401
-            lambda n: str(int(n.group())+1),
-            str(formula)) 
+        elif isinstance(formula, AndOp):
+            formula_list_or.append(ThreadCalculateFBP.case_andOp(formula))
 
-        formula = (formula
-            .replace('~', '¬')
-            .replace('&', '∧')
-            .replace('|', '∨'))
-
-        formula = (formula
-            .replace(' ', '')
-            .replace('(', '')
-            .replace(')', '')
-            .split('∨'))
-
-        convert = lambda l: [int(l[1]), l[0]]
-        formula = (
-            list(map(lambda o: 
-                list(map(lambda a:
-                    convert(a.split('_')),
-                o.split('∧'))), 
-            formula)))
-
-        formula = (
-            list(map(lambda o: 
-                sorted(o),
-            formula)))
-
-        formula.sort()
-
-        parent.formula = formula
+        elif isinstance(formula, OrOp):
+            for formula_and in formula.xs:
+                formula_list_or.append(ThreadCalculateFBP.case_andOp(formula_and))
+        
+        formula_list_or.sort()
+        parent.formula = formula_list_or
 
 
 def increase_recursion_limit():

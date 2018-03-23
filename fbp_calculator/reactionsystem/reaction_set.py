@@ -1,7 +1,4 @@
-from sympy import Symbol
-from sympy import Not
-from sympy import And
-from sympy import Or
+from pyeda.inter import *
 
 from .reaction import Reaction
 from .exceptions import ExceptionReactionSystem
@@ -23,7 +20,7 @@ class ReactionSet(set):
     def cause(self, symbol):
         Reaction._check_symbol(symbol)
 
-        cause = False
+        cause = expr(False)
         for reaction in self:
             if symbol in reaction.P:
                 cause = Or(cause, reaction.ap())

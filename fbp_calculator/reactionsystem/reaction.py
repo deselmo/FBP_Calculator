@@ -1,7 +1,4 @@
-from sympy import Symbol
-from sympy import Not
-from sympy import And
-from sympy import Or
+from pyeda.inter import *
 
 from .exceptions import ExceptionReactionSystem
 
@@ -82,11 +79,11 @@ class Reaction:
 
 
     def ap(self):
-        f = True
+        f = expr(True)
         for symbol in self.R:
-            f = And(f, Symbol(symbol))
+            f = And(f, exprvar(symbol))
         for symbol in self.I:
-            f = And(f, Not(Symbol(symbol)))
+            f = And(f, Not(exprvar(symbol)))
         return f
 
 
