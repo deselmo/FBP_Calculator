@@ -3,6 +3,7 @@ from pyeda.inter import exprvar
 from pyeda.inter import Not
 from pyeda.inter import And
 from pyeda.inter import Or
+from pyeda.inter import espresso_exprs
 from pyeda.boolalg.expr import Constant
 from pyeda.boolalg.expr import Literal
 from pyeda.boolalg.expr import Variable
@@ -44,7 +45,7 @@ class ReactionSystem():
             if not isinstance(steps, int) or steps < 0: raise ExceptionReactionSystem.InvalidNumber()
             formula = And(formula, self._fbs(self.cause(symbol), steps))
         
-        return formula.to_dnf()
+        return espresso_exprs(formula.to_dnf())[0]
 
 
     def _fbs(self, formula, i):

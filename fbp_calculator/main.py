@@ -8,10 +8,7 @@ import re
 import math
 from copy import deepcopy
 
-import threading
-import thread_with_exc
-
-import jsonpickle
+import multiprocessing  
 
 from reactionsystem import \
     Reaction, \
@@ -47,6 +44,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
         self.reaction_list = []
         
+        self.temp_file_name = ''
         self.current_file_name = ''
 
         self.validatorLineEditSymbols = QtGui.QRegExpValidator(QtCore.QRegExp("^[a-zA-Z ]+$")) # pylint: disable=W1401
@@ -108,16 +106,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def actionOpen_triggered(self, value=None):
         if not self.check_save():
             return
-        self.current_file_name, _ = \
+        self.temp_file_name, _ = \
             QtWidgets.QFileDialog.getOpenFileName(self, 
                 'Open a Reaction System file', 
                 '',
-                'JSON files (*.json)')
-        if not self.current_file_name:
+                'TXT files (*.txt)')
+        if not self.temp_file_name:
             return
 
         try:
-            with open(self.current_file_name, 'r') as file:
+            with open(self.temp_file_name, 'r') as file:
                 file_content = file.read()
         except Exception as e:
             error_message = str(e)
@@ -129,24 +127,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
                 QtWidgets.QMessageBox.Close,
                 QtWidgets.QMessageBox.Close)
             return
-        
+
         try:
-            reaction_list_opened = jsonpickle.decode(file_content)
-        except Exception:
-            self.notify('Error: invalid file')
+            self.reaction_list = self.text2reaction_list(file_content)
+        except ValueError as e:
+            QtWidgets.QMessageBox.critical(self,
+                'Error when opening the file',
+                'Invalid syntax: \'{}\''.format(self.temp_file_name),
+                QtWidgets.QMessageBox.Close,
+                QtWidgets.QMessageBox.Close)
             return
 
-
-        if not isinstance(reaction_list_opened, list) or \
-            not isinstance(ReactionSet(reaction_list_opened), ReactionSet):
-            self.notify('Error: invalid file')
-            return
-
-        self.reaction_list = reaction_list_opened
         self.listWidgetReactions_clear()
 
         for reaction in self.reaction_list:
             self.listWidgetReactions_addReaction(reaction)
+
+        self.current_file_name = self.temp_file_name
 
         self.notify('File ' + self.current_file_name + ' opened')
 
@@ -154,15 +151,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         if not self.current_file_name:
             self.actionSave_as_triggered()
             return
-        self.saveFile()
+        self.save_file(self.current_file_name)
     
     def actionSave_as_triggered(self, value=None):
-        self.current_file_name, _ = \
+        file_name, _ = \
             QtWidgets.QFileDialog.getSaveFileName(self, 
                 'Save Reaction System As', 
-                'untitled.json',
-                'JSON files (*.json)')
-        self.saveFile()
+                'untitled.txt',
+                'TXT files (*.txt)')
+        self.save_file(file_name)
 
     def actionQuit_triggered(self, value=None):
         if not self.check_save():
@@ -176,34 +173,68 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             'Writtern by William Guglielmo')
 
 
-    # def reaction_list2text(self):
-    #     self.reaction_list
-    #     result = ''
-    #     for reaction in reaction_list:
-            
-    #     return ''
-        
-    # def text2reaction_list(self):
-    #     return []
-
-
-    def saveFile(self):
-        if self.current_file_name:
+    @staticmethod 
+    def text2reaction_list(text):
+        reaction_list = []
+        text.replace('\r', ' ')
+        text.replace('\t', ' ')
+        reactions = text.split('\n')
+        reactions_len = len(reactions)
+        for i in range(0, reactions_len):
+            reaction = reactions[i]
+            if reaction == '' or reaction.isspace():
+                for j in range(i, reactions_len):
+                    if not(reactions[j] == '' or reactions[j].isspace):
+                        raise ValueError()
+                break
+            split_r = reaction.split('->')
+            if len(split_r) != 2: raise ValueError()
+            r = split_r[0]
+            split_p = split_r[1].split('|')
+            split_p_len = len(split_p)
+            if split_p_len > 2: raise ValueError()
+            p = split_p[0]
+            i = split_p[1] if split_p_len == 2 else ''
             try:
-                with open(self.current_file_name, 'w') as file:
-                    file.write(jsonpickle.encode(self.reaction_list))
-            except Exception as e:
-                error_message = str(e)
-                if 'Errno' in error_message:
-                    error_message = error_message.split('] ')[1]
-                QtWidgets.QMessageBox.critical(self,
-                    'Error when saving the file',
-                    '{}'.format(error_message),
-                    QtWidgets.QMessageBox.Close,
-                    QtWidgets.QMessageBox.Close)
-                return
-            self.actionSave.setEnabled(False)
-            self.notify('File ' + self.current_file_name + ' saved')
+                reaction_list.append(Reaction(r, p, i))
+            except Exception: raise ValueError()
+
+        return reaction_list
+
+    @staticmethod
+    def reaction_list2text(reaction_list):
+        text = ''
+        for reaction in reaction_list:
+            text += ' '.join(reaction.R)
+            text += ' -> '
+            text += ' '.join(reaction.P)
+            if len(reaction.I):
+                text += ' | '
+                text += ' '.join(reaction.I)
+            text += '\r\n'
+        
+        return text
+
+
+    def save_file(self, file_name):
+        if not file_name:
+            return
+        try:
+            with open(file_name, 'w') as file:
+                file.write(self.reaction_list2text(self.reaction_list))
+        except Exception as e:
+            error_message = str(e)
+            if 'Errno' in error_message:
+                error_message = error_message.split('] ')[1]
+            QtWidgets.QMessageBox.critical(self,
+                'Error when saving the file',
+                '{}'.format(error_message),
+                QtWidgets.QMessageBox.Close,
+                QtWidgets.QMessageBox.Close)
+            return
+        self.actionSave.setEnabled(False)
+        self.current_file_name = file_name
+        self.notify('File ' + self.current_file_name + ' saved')
 
     def check_save(self):
         if self.actionSave.isEnabled() and len(self.reaction_list):
@@ -439,9 +470,9 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.tableWidgetFormula.verticalScrollBar().valueChanged.connect(self.tableWidgetFormula_verticalScrollBar_valueChanged)
 
 
-        self.qthreadCalculateFBP = QThreadCalculateFBP(self)
-        self.qthreadCalculateFBP.finished.connect(self.qthreadCalculateFBP_finished)
-        self.qthreadCalculateFBP.start()
+        self.QThreadCalculatorFBP = QThreadCalculatorFBP(self)
+        self.QThreadCalculatorFBP.finished.connect(self.QThread_finishedCalculatorFBP)
+        self.QThreadCalculatorFBP.start()
 
 
     def resizeEvent(self, event):
@@ -450,17 +481,18 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.tableWidgetFormula_verticalScrollBar_valueChanged()
 
     def closeEvent(self, event):
-        self.qthreadCalculateFBP.stop()
-        self.qthreadCalculateFBP.wait()
+        self.QThreadCalculatorFBP.stop()
+        self.QThreadCalculatorFBP.wait()
         event.accept()
     
-    def qthreadCalculateFBP_finished(self):
-        if self.qthreadCalculateFBP.stopped:
+    def QThread_finishedCalculatorFBP(self):
+        if self.QThreadCalculatorFBP.stopped:
             return
 
         try:
-            self.formula
-        except NameError:
+            self.formula = self.QThreadCalculatorFBP.result['formula']
+            self.formula_table = self.QThreadCalculatorFBP.result['formula_table']
+        except Exception:
             self.parent.notify('Error in fbp calculation')
             self.close()
             return
@@ -666,31 +698,36 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.tableWidgetFormula.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
 
 
-class QThreadCalculateFBP(QtCore.QThread):
+class QThreadCalculatorFBP(QtCore.QThread):
     stopped = False
 
-    def __init__(self, parent):
-        self.parent = parent
-        super(QThreadCalculateFBP, self).__init__()
+    def __init__(self, dialog):
+        self.result = multiprocessing.Manager().dict()
+        self._process = ProcessCalculateFBP(dialog.steps, dialog.symbols, dialog.rs, self.result)
+        self._process.daemon = True
+
+        super(QThreadCalculatorFBP, self).__init__()
 
     def run(self):
-        self._thread = ThreadCalculateFBP(self.parent)
-        self._thread.setDaemon(True)
-        self._thread.start()
-        self._thread.join()
+        self._process.start()
+        self._process.join()
 
     def stop(self):
         self.stopped = True
         try:
-            self._thread.terminate()
-        except threading.ThreadError as e:
-            if str(e) != 'the thread is not active': raise e
+            self._process.terminate()
+        except Exception: pass
 
 
-class ThreadCalculateFBP(thread_with_exc.Thread):
-    def __init__(self, parent):
-        self.parent = parent
-        super(ThreadCalculateFBP, self).__init__()
+class ProcessCalculateFBP(multiprocessing.Process):
+    def __init__(self, steps, symbols, rs, result):
+        self.steps = steps
+        self.symbols = symbols
+        self.rs = rs
+        self.result = result
+
+        super(ProcessCalculateFBP, self).__init__()
+
 
     @staticmethod
     def case_literal(formula):
@@ -704,7 +741,7 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
     def case_andOp(formula):
         formula_list_and = []
         for formula_x in formula.xs:
-            formula_list_and.append(ThreadCalculateFBP.case_literal(formula_x))
+            formula_list_and.append(ProcessCalculateFBP.case_literal(formula_x))
         return formula_list_and
 
     @staticmethod
@@ -712,29 +749,27 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
         formula_list_or = []
         for formula_and in formula.xs:
             if isinstance(formula_and, Literal):
-                formula_list_or.append([ThreadCalculateFBP.case_literal(formula_and)])
+                formula_list_or.append([ProcessCalculateFBP.case_literal(formula_and)])
             elif isinstance(formula_and, AndOp):
-                formula_list_or.append(ThreadCalculateFBP.case_andOp(formula_and))
+                formula_list_or.append(ProcessCalculateFBP.case_andOp(formula_and))
         return formula_list_or
           
 
     def run(self):
-        parent = self.parent
-
-        formula = parent.rs.fbp(parent.symbols, parent.steps-1)
+        formula = self.rs.fbp(self.symbols, self.steps-1)
 
         if isinstance(formula, Constant):
-            parent.formula = formula.VALUE
+            self.result['formula'] = formula.VALUE
             return
 
         if isinstance(formula, Literal):
-            formula_list_or = [[ThreadCalculateFBP.case_literal(formula)]]
+            formula_list_or = [[ProcessCalculateFBP.case_literal(formula)]]
 
         elif isinstance(formula, AndOp):
-            formula_list_or = [ThreadCalculateFBP.case_andOp(formula)]
+            formula_list_or = [ProcessCalculateFBP.case_andOp(formula)]
 
         elif isinstance(formula, OrOp):
-            formula_list_or = ThreadCalculateFBP.case_orOp(formula)
+            formula_list_or = ProcessCalculateFBP.case_orOp(formula)
         
         formula_list_or.sort()
         
@@ -750,8 +785,8 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
                    formula_dict_and[n] = s
             formula_table_or.append(formula_dict_and)
 
-        parent.formula = formula_list_or
-        parent.formula_table = formula_table_or
+        self.result['formula'] = formula_list_or
+        self.result['formula_table'] = formula_table_or
 
 
 def increase_recursion_limit():
