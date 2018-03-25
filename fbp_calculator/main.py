@@ -23,6 +23,8 @@ from reactionsystem import \
 import thread_with_exc
 import threading
 
+import math
+
 from pyeda.inter import Not
 from pyeda.boolalg.expr import Constant
 from pyeda.boolalg.expr import Literal
@@ -35,8 +37,6 @@ from pyeda.boolalg.expr import OrOp
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def __init__(self, app, parent=None):
-        self.blabla = 1
-
         super(MainWindow, self).__init__(parent)
 
         self.setupUi(self)
@@ -78,9 +78,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.actionAbout.triggered.connect(self.actionAbout_triggered)
 
         self.tableWidgetProperties.horizontalScrollBar().valueChanged.connect(self.tableWidgetProperties_scrollBar_valueChanged)
-        self.tableWidgetProperties.setCellWidget(0, 0, QtWidgets.QLineEdit())
-        self.tableWidgetProperties.setCellWidget(1, 0, QtWidgets.QLineEdit())
-        self.tableWidgetProperties.chunck_size = 100
+
+        self.tableWidgetProperties_addColumn()
+        self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
         self.setGeometry(
             QtWidgets.QStyle.alignedRect(
@@ -109,6 +109,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         event.ignore()
         self.actionQuit_triggered()
 
+    def resizeEvent(self, event):
+        self.pushButtonCalculate_enable()
 
     def actionNew_triggered(self, value=None):
         if not self.check_save():
@@ -281,7 +283,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.pushButtonCalculate_enable()
         self.actionSave.setEnabled(True)
 
-    
+
     def pushButtonCalculate_enable(self, string=None):
         if self.lineEditCalculatorSymbols.text() != '' \
                 and self.spinBoxCalculatorSteps.value() != 0 \
@@ -289,64 +291,56 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             self.pushButtonCalculate.setEnabled(True)
 
             self.tableWidgetProperties.setEnabled(True)
-        
-            steps = self.spinBoxCalculatorSteps.value()
-            columns = self.tableWidgetProperties.columnCount()
-            chunk_size = self.tableWidgetProperties.chunck_size
-
-            if steps > chunk_size and steps > columns:
-                steps = columns+1
-            else:
-                steps = steps if steps < chunk_size else chunk_size
-
-            self.tableWidgetProperties.setColumnCount(steps)
-            for i in range(0, steps):
-                self.tableWidgetProperties.setHorizontalHeaderItem(i, QtWidgets.QTableWidgetItem(str(i+1)))
-            for i in range(0, 2):
-                for j in range(0, steps):
-                    if isinstance(self.tableWidgetProperties.cellWidget(i, j), QtWidgets.QLineEdit):
-                        continue
-                    self.tableWidgetProperties.setItem(i, j, QtWidgets.QTableWidgetItem())
-                    lineEdit = QtWidgets.QLineEdit()
-                    lineEdit.setValidator(self.validatorLineEditSymbols)
-                    lineEdit.returnPressed.connect(self.pushButtonCalculate.click)
-                    self.tableWidgetProperties.setCellWidget(i, j, lineEdit)
-
-                self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+            self.tableWidgetProperties_initialize()
 
         else:
             self.pushButtonCalculate.setEnabled(False)
             self.tableWidgetProperties.setEnabled(False)
 
-    def tableWidgetProperties_scrollBar_valueChanged(self, value):
-        if (self.tableWidgetProperties.isEnabled() and
-                value == self.tableWidgetProperties.horizontalScrollBar().maximum()):
 
-            steps = self.spinBoxCalculatorSteps.value()
-            columns = self.tableWidgetProperties.columnCount()
-            chunk_size = self.tableWidgetProperties.chunck_size
-            steps = steps if steps < columns+chunk_size else columns+chunk_size
-
-            if steps == self.tableWidgetProperties.columnCount():
-                return
-
-            self.tableWidgetProperties.setColumnCount(steps)
-            for i in range(columns, steps):
-                self.tableWidgetProperties.setHorizontalHeaderItem(i, QtWidgets.QTableWidgetItem(str(i+1)))
-
-            for i in range(0, 2):
-                for j in range(columns, steps):
-                    if isinstance(self.tableWidgetProperties.cellWidget(i, j), QtWidgets.QLineEdit):
-                        continue
-                    self.tableWidgetProperties.setItem(i, j, QtWidgets.QTableWidgetItem())
-                    lineEdit = QtWidgets.QLineEdit()
-                    lineEdit.setValidator(self.validatorLineEditSymbols)
-                    lineEdit.returnPressed.connect(self.pushButtonCalculate.click)
-                    self.tableWidgetProperties.setCellWidget(i, j, lineEdit)
-                self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-
-                
+    def tableWidgetProperties_initialize(self):
         
+        if self.tableWidgetProperties.columnCount() > self.spinBoxCalculatorSteps.value():
+            self.tableWidgetProperties.setColumnCount(self.spinBoxCalculatorSteps.value())
+
+        for _ in range(self.tableWidgetProperties.columnCount(), self.spinBoxCalculatorSteps.value()):
+            self.tableWidgetProperties_addColumn()
+            if self.tableWidgetProperties.horizontalScrollBar().maximum() != 0:
+                break
+        
+        self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    
+    def tableWidgetProperties_scrollBar_valueChanged(self, value=None):
+        if not self.tableWidgetProperties.isEnabled():
+            return
+
+        if value == None:
+            value = self.tableWidgetProperties.horizontalScrollBar().value()
+
+
+        for _ in range(self.tableWidgetProperties.columnCount(), self.spinBoxCalculatorSteps.value()):
+            if value == self.tableWidgetProperties.horizontalScrollBar().maximum():
+                self.tableWidgetProperties_addColumn()
+            else: break
+
+        self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+    
+    def tableWidgetProperties_addColumn(self):
+        column = self.tableWidgetProperties.columnCount()
+        self.tableWidgetProperties.setColumnCount(column+1)
+
+        self.tableWidgetProperties.setHorizontalHeaderItem(column, QtWidgets.QTableWidgetItem(str(column+1)))
+        for i in range(0, self.tableWidgetProperties.rowCount()):
+            self.tableWidgetProperties_addCell(i, column)
+
+    def tableWidgetProperties_addCell(self, row, column):
+        cellWidget = self.tableWidgetProperties.cellWidget(row, column)
+        if cellWidget == None:
+            lineEdit = QtWidgets.QLineEdit()
+            lineEdit.setValidator(self.validatorLineEditSymbols)
+            lineEdit.returnPressed.connect(self.pushButtonCalculate.click)
+            self.tableWidgetProperties.setCellWidget(row, column, lineEdit)
+
 
     def statusbarChanged(self, string):
         if string and string[0:5] == 'Error':
@@ -389,9 +383,11 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
 
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
-        self.comboBoxFormulaType.setCurrentIndex(1)
-        self.textBrowserFormula.setVisible(False)
-        self.tableWidgetFormula.setVisible(False)
+        self.formulaType_defaultIndex = 2
+        self.comboBoxFormulaType.setCurrentIndex(self.formulaType_defaultIndex)
+        self.textBrowserFormula.setVisible(self.formulaType_defaultIndex == 0)
+        self.listFormula.setVisible(self.formulaType_defaultIndex == 1)
+        self.tableWidgetFormula.setVisible(self.formulaType_defaultIndex == 2)
 
         self.parent = parent
         self.symbols = parent.lineEditCalculatorSymbols.text()
@@ -412,7 +408,6 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
             for symbol in symbols_false:
                 self.context_false_set.add((j, symbol))
 
-
         self.lineEditSymbols.setText(self.symbols)
         self.lineEditSteps.setText(str(self.steps))
         
@@ -421,31 +416,33 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
 
         self.comboBoxFormulaType.currentIndexChanged.connect(self.comboBoxFormulaType_currentIndexChanged)
 
+
+        self.listFormula.verticalScrollBar().valueChanged.connect(self.listFormula_scrollBar_valueChanged)
+        self.tableWidgetFormula.horizontalScrollBar().valueChanged.connect(self.tableWidgetFormula_horizontalScrollBar_valueChanged)
+        self.tableWidgetFormula.verticalScrollBar().valueChanged.connect(self.tableWidgetFormula_verticalScrollBar_valueChanged)
+
+
         self.qthreadCalculateFBP = QThreadCalculateFBP(self)
         self.qthreadCalculateFBP.finished.connect(self.qthreadCalculateFBP_finished)
         self.qthreadCalculateFBP.start()
-
 
     def closeEvent(self, event):
         self.qthreadCalculateFBP.stop()
         self.qthreadCalculateFBP.wait()
         event.accept()
-
     
+    def resizeEvent(self, event):
+        self.listFormula_scrollBar_valueChanged()
+        self.tableWidgetFormula_horizontalScrollBar_valueChanged()
+        self.tableWidgetFormula_verticalScrollBar_valueChanged()
+
     def comboBoxFormulaType_currentIndexChanged(self, index):
         if index == 0:
-            self.textBrowserFormula.setVisible(True)
-            self.listFormula.setVisible(False)
-            self.tableWidgetFormula.setVisible(False)
+            self.textBrowserFormula_show()
         elif index == 1:
-            self.textBrowserFormula.setVisible(False)
-            self.listFormula.setVisible(True)
-            self.tableWidgetFormula.setVisible(False)
+            self.listFormula_show()
         elif index == 2:
-            self.textBrowserFormula.setVisible(False)
-            self.listFormula.setVisible(False)
-            self.tableWidgetFormula.setVisible(True)
-
+            self.tableWidgetFormula_show()
 
     def qthreadCalculateFBP_finished(self):
         if self.qthreadCalculateFBP.stopped:
@@ -463,20 +460,25 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.labelLoadingImage.movie().stop()
 
         self.comboBoxFormulaType.setEnabled(True)
-        self.listFormula.setEnabled(True)
+        self.comboBoxFormulaType_currentIndexChanged(self.formulaType_defaultIndex)
 
+        self.raise_()
+
+
+    def textBrowserFormula_show(self):
+        self.listFormula.setVisible(False)
+        self.tableWidgetFormula.setVisible(False)
+        self.textBrowserFormula.setVisible(True)
+
+        if not self.textBrowserFormula.isEnabled():
+            self.textBrowserFormula.setEnabled(True)
+            self.textBrowserFormula_initialize()
+            
+    def textBrowserFormula_initialize(self):
         if isinstance(self.formula, bool):
-            strFormula = str(self.formula)
-            self.textBrowserFormula.setText(strFormula)
-
-            self.listFormula.addItem(QtWidgets.QListWidgetItem(strFormula))
-    
-            self.tableWidgetFormula.horizontalHeader().setVisible(False)
-            self.tableWidgetFormula.setRowCount(1)
-            self.tableWidgetFormula.setColumnCount(1)
-            self.tableWidgetFormula.setItem(0, 0, QtWidgets.QTableWidgetItem(strFormula))
+            self.textBrowserFormula.setText(str(self.formula))
             return
-        
+
         stringFormula = ''
         prebrackets = len(self.formula) > 1
         for i in range(0, len(self.formula)):
@@ -489,49 +491,160 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
                 stringFormula += '{}<sub>{}</sub>'.format(s, str(n))
             if backets: stringFormula += ')'
         self.textBrowserFormula.setText(stringFormula)
-                
+
+
+    def listFormula_show(self):
+        self.textBrowserFormula.setVisible(False)
+        self.tableWidgetFormula.setVisible(False)
+        self.listFormula.setVisible(True)
+
+        if not self.listFormula.isEnabled():
+            self.listFormula.setEnabled(True)
+            self.listFormula_initialize()
+        else:
+            self.listFormula_scrollBar_valueChanged()
+            
+    def listFormula_initialize(self):
+        if isinstance(self.formula, bool):
+            self.listFormula.addItem(QtWidgets.QListWidgetItem(str(self.formula)))
+            return
+
+        for _ in self.formula:
+            self.listFormula_addRow()
+
+            if self.listFormula.verticalScrollBar().maximum() != 0:
+                break
+    
+    def listFormula_scrollBar_valueChanged(self, value=None):
+        if (not self.listFormula.isEnabled()) or isinstance(self.formula, bool):
+            return
+
+        if value == None:
+            value = self.listFormula.verticalScrollBar().value()
+
+        listFormula_len = self.listFormula.count()
+
+        for _ in range(listFormula_len, len(self.formula)):
+            if value == self.listFormula.verticalScrollBar().maximum():
+                self.listFormula_addRow()
+            else: break
+
+    def listFormula_addRow(self):
+        f = self.formula[self.listFormula.count()]
+        string = ''
+        for i in range(0, len(f)):
+            if i > 0: string += ' '
+            n, s = f[i]
+            string += '{}<sub>{}</sub>'.format(s, str(n))
+
+        label = QtWidgets.QLabel(string)
+        label.setContentsMargins(4,4,4,4)
+        item = QtWidgets.QListWidgetItem()
+        item.setSizeHint(label.sizeHint())
+        self.listFormula.addItem(item)
+        self.listFormula.setItemWidget(item, label)
+
+
+    def tableWidgetFormula_show(self):
+        self.textBrowserFormula.setVisible(False)
+        self.listFormula.setVisible(False)
+        self.tableWidgetFormula.setVisible(True)
+
+        if not self.tableWidgetFormula.isEnabled():
+            self.tableWidgetFormula.setEnabled(True)
+            self.tableWidgetFormula_initialize()
+
+    def tableWidgetFormula_initialize(self):
+        if isinstance(self.formula, bool):
+            self.tableWidgetFormula.horizontalHeader().setVisible(False)
+            self.tableWidgetFormula.setRowCount(1)
+            self.tableWidgetFormula.setColumnCount(1)
+            self.tableWidgetFormula_addCell(0, 0, str(self.formula))
+
+            self.tableWidgetFormula_resizeToContent()
+            return
         
-        for f in self.formula:
-            string = ''
-            for i in range(0, len(f)):
-                if i > 0: string += ' '
-                n, s = f[i]
-                string += '{}<sub>{}</sub>'.format(s, str(n))
+        table = self.tableWidgetFormula
 
-            label = QtWidgets.QLabel(string)
-            label.setContentsMargins(4,4,4,4)
-            item = QtWidgets.QListWidgetItem()
-            item.setSizeHint(label.sizeHint())
-            self.listFormula.addItem(item)
-            self.listFormula.setItemWidget(item, label)
+        table.setColumnCount(1)
+
+        for _ in self.formula:
+            self.tableWidgetFormula_addRow()
+            if self.tableWidgetFormula.verticalScrollBar().maximum() != 0:
+                break
+
+        for _ in range(1, self.steps):
+            self.tableWidgetFormula_addColumn()
+            if self.tableWidgetFormula.horizontalScrollBar().maximum() != 0:
+                break
+        
+    def tableWidgetFormula_verticalScrollBar_valueChanged(self, value=None):
+        if (not self.tableWidgetFormula.isEnabled()) or isinstance(self.formula, bool):
+            return
+
+        if value == None:
+            value = self.tableWidgetFormula.verticalScrollBar().value()
+
+        for _ in range(self.tableWidgetFormula.rowCount(), len(self.formula)):
+            if value == self.tableWidgetFormula.verticalScrollBar().maximum():
+                self.tableWidgetFormula_addRow()
+            else: break
+
+    def tableWidgetFormula_horizontalScrollBar_valueChanged(self, value=None):
+        if (not self.tableWidgetFormula.isEnabled()) or isinstance(self.formula, bool):
+            return
+
+        if value == None:
+            value = self.tableWidgetFormula.horizontalScrollBar().value()
 
 
-        self.tableWidgetFormula.setColumnCount(self.steps+1)
-        for i in range(0, self.steps):
-            self.tableWidgetFormula.setHorizontalHeaderItem(i, QtWidgets.QTableWidgetItem(str(i+1)))
-        self.tableWidgetFormula.setHorizontalHeaderItem(self.steps, QtWidgets.QTableWidgetItem(''))
+        for _ in range(self.tableWidgetFormula.columnCount(), self.steps):
+            if value == self.tableWidgetFormula.horizontalScrollBar().maximum():
+                self.tableWidgetFormula_addColumn()
+            else: break
 
-        self.tableWidgetFormula.setRowCount(len(self.formula))
-        for i in range(0, len(self.formula)):
-            for j in range(0, self.steps):
-                self.tableWidgetFormula.setItem(i, j, QtWidgets.QTableWidgetItem())
-            for j in range(0, len(self.formula[i])):
-                n, s = self.formula[i][j]
-                cellWidget = self.tableWidgetFormula.cellWidget(i, n-1)
-                pre_text = (cellWidget.text() + ' ') if cellWidget != None else ''
-                label = QtWidgets.QLabel(pre_text + s)
-                label.setContentsMargins(8,2,8,2)
-                label.setAlignment(QtCore.Qt.AlignCenter)
-                item = self.tableWidgetFormula.item(i, n-1)
-                item.setSizeHint(label.sizeHint())
-                self.tableWidgetFormula.setCellWidget(i, n-1, label)
-                
+    def tableWidgetFormula_addRow(self):
+        column = self.tableWidgetFormula.columnCount()
+        row = self.tableWidgetFormula.rowCount()
+        self.tableWidgetFormula.setRowCount(row+1)
+        
+        f = self.formula_table[row]
+        for i in range(0, column):
+            if not i in f: continue
+            s = f[i]
+            self.tableWidgetFormula_addCell(row, i, s)
 
+        self.tableWidgetFormula_resizeToContent()
+    
+    def tableWidgetFormula_addColumn(self):
+        column = self.tableWidgetFormula.columnCount()
+        row = self.tableWidgetFormula.rowCount()
+        self.tableWidgetFormula.setColumnCount(column+1)
+
+        self.tableWidgetFormula.setHorizontalHeaderItem(column, QtWidgets.QTableWidgetItem(str(column+1)))
+
+        for i in range(0, row):
+            f = self.formula_table[i]
+            if not column in f: continue
+            s = f[column]
+            self.tableWidgetFormula_addCell(i, column, s)
+
+        self.tableWidgetFormula_resizeToContent()
+
+    def tableWidgetFormula_addCell(self, row, column, text):
+        cellWidget = self.tableWidgetFormula.cellWidget(row, column)
+        if cellWidget == None:
+            label = QtWidgets.QLabel(text)
+            label.setContentsMargins(8,2,8,2)
+            label.setAlignment(QtCore.Qt.AlignCenter)
+            self.tableWidgetFormula.setCellWidget(row, column, label)
+        else:
+            raise Exception('Add a cell more than one time')
+
+    def tableWidgetFormula_resizeToContent(self):
         self.tableWidgetFormula.horizontalHeader().setResizeContentsPrecision(self.tableWidgetFormula.rowCount())
         self.tableWidgetFormula.resizeColumnsToContents()
         self.tableWidgetFormula.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Fixed)
-
-        self.raise_()
 
 
 class QThreadCalculateFBP(QtCore.QThread):
@@ -585,13 +698,11 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
             elif isinstance(formula_and, AndOp):
                 formula_list_or.append(ThreadCalculateFBP.case_andOp(formula_and))
         return formula_list_or
-        
-        
+          
 
     def run(self):
         parent = self.parent
 
-        # formula = parent.rs.fbp(parent.symbols, parent.steps-1, parent.context_true_set, parent.context_false_set)
         formula = parent.rs.fbp(parent.symbols, parent.steps-1)
 
         if isinstance(formula, Constant):
@@ -608,7 +719,21 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
             formula_list_or = ThreadCalculateFBP.case_orOp(formula)
         
         formula_list_or.sort()
+        
+        formula_table_or = []
+        for formula_list_and in formula_list_or:
+            formula_dict_and = {}
+            for formula in formula_list_and:
+                n, s = formula
+                n -= 1
+                if n in formula_dict_and:
+                    formula_dict_and[n] += s
+                else:
+                   formula_dict_and[n] = s
+            formula_table_or.append(formula_dict_and)
+
         parent.formula = formula_list_or
+        parent.formula_table = formula_table_or
 
 
 def increase_recursion_limit():

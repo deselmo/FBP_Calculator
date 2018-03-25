@@ -12,6 +12,7 @@ class Ui_DialogFBP(object):
     def setupUi(self, DialogFBP):
         DialogFBP.setObjectName("DialogFBP")
         DialogFBP.resize(320, 336)
+        DialogFBP.setWindowTitle("")
         self.gridLayout = QtWidgets.QGridLayout(DialogFBP)
         self.gridLayout.setObjectName("gridLayout")
         self.lineEditSymbols = QtWidgets.QLineEdit(DialogFBP)
@@ -25,7 +26,7 @@ class Ui_DialogFBP(object):
         self.lineEditSymbols.setObjectName("lineEditSymbols")
         self.gridLayout.addWidget(self.lineEditSymbols, 1, 0, 1, 1)
         self.textBrowserFormula = QtWidgets.QTextBrowser(DialogFBP)
-        self.textBrowserFormula.setEnabled(True)
+        self.textBrowserFormula.setEnabled(False)
         self.textBrowserFormula.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.textBrowserFormula.setObjectName("textBrowserFormula")
         self.gridLayout.addWidget(self.textBrowserFormula, 4, 0, 1, 2)
@@ -77,6 +78,7 @@ class Ui_DialogFBP(object):
         self.lineEditSteps.setObjectName("lineEditSteps")
         self.gridLayout.addWidget(self.lineEditSteps, 1, 1, 1, 1)
         self.tableWidgetFormula = QtWidgets.QTableWidget(DialogFBP)
+        self.tableWidgetFormula.setEnabled(False)
         self.tableWidgetFormula.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.tableWidgetFormula.setAlternatingRowColors(True)
         self.tableWidgetFormula.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
@@ -90,8 +92,7 @@ class Ui_DialogFBP(object):
         self.tableWidgetFormula.setRowCount(0)
         self.tableWidgetFormula.horizontalHeader().setCascadingSectionResizes(True)
         self.tableWidgetFormula.horizontalHeader().setDefaultSectionSize(0)
-        self.tableWidgetFormula.horizontalHeader().setMinimumSectionSize(0)
-        self.tableWidgetFormula.horizontalHeader().setStretchLastSection(True)
+        self.tableWidgetFormula.horizontalHeader().setMinimumSectionSize(30)
         self.tableWidgetFormula.verticalHeader().setVisible(False)
         self.tableWidgetFormula.verticalHeader().setDefaultSectionSize(25)
         self.tableWidgetFormula.verticalHeader().setMinimumSectionSize(0)
@@ -114,7 +115,6 @@ class Ui_DialogFBP(object):
 
     def retranslateUi(self, DialogFBP):
         _translate = QtCore.QCoreApplication.translate
-        DialogFBP.setWindowTitle(_translate("DialogFBP", " "))
         self.labelSteps.setText(_translate("DialogFBP", "Steps:"))
         self.comboBoxFormulaType.setItemText(0, _translate("DialogFBP", "Formula"))
         self.comboBoxFormulaType.setItemText(1, _translate("DialogFBP", "List of or"))
