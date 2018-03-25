@@ -437,8 +437,8 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.tableWidgetFormula.setVisible(self.formulaType_defaultIndex == 2)
 
         self.parent = parent
-        self.symbols = parent.lineEditCalculatorSymbols.text()
-        self.steps = parent.spinBoxCalculatorSteps.value()
+        self.symbols = deepcopy(parent.lineEditCalculatorSymbols.text())
+        self.steps = deepcopy(parent.spinBoxCalculatorSteps.value())
         self.rs = ReactionSystem(ReactionSet(deepcopy(parent.reaction_list)))
         
         columnCount = parent.tableWidgetProperties.columnCount()
