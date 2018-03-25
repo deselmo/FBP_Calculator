@@ -1,6 +1,7 @@
-from pyeda.inter import expr
-from pyeda.inter import Or
-
+from pyeda.inter import \
+    expr, \
+    Or
+    
 from .reaction import Reaction
 from .exceptions import ExceptionReactionSystem
 

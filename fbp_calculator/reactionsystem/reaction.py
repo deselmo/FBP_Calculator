@@ -1,7 +1,8 @@
-from pyeda.inter import expr
-from pyeda.inter import exprvar
-from pyeda.inter import Not
-from pyeda.inter import And
+from pyeda.inter import \
+    expr, \
+    exprvar, \
+    Not, \
+    And
 
 from .exceptions import ExceptionReactionSystem
 
@@ -37,11 +38,11 @@ class Reaction:
 
     @staticmethod
     def _str_frozenset(s):
-        return '' if len(s) == 0 else ' '.join(s)
+        return '' if len(s) == 0 else ' '.join(sorted(list(s)))
 
     @staticmethod
     def _repr_frozenset(s):
-        return '{' + ('' if len(s) == 0 else ', '.join(s)) + '}'
+        return '{' + ('' if len(s) == 0 else ', '.join(sorted(list(s)))) + '}'
 
 
     @property

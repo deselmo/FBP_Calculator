@@ -1,16 +1,19 @@
-from pyeda.inter import expr
-from pyeda.inter import exprvar
-from pyeda.inter import Not
-from pyeda.inter import And
-from pyeda.inter import Or
-from pyeda.inter import espresso_exprs
-from pyeda.boolalg.expr import Constant
-from pyeda.boolalg.expr import Literal
-from pyeda.boolalg.expr import Variable
-from pyeda.boolalg.expr import Complement
-from pyeda.boolalg.expr import NotOp
-from pyeda.boolalg.expr import AndOp
-from pyeda.boolalg.expr import OrOp
+from pyeda.inter import \
+    expr, \
+    exprvar, \
+    Not, \
+    And, \
+    Or, \
+    espresso_exprs
+
+from pyeda.boolalg.expr import \
+    Constant, \
+    Literal, \
+    Variable, \
+    Complement, \
+    NotOp, \
+    AndOp, \
+    OrOp
 
 from .reaction import Reaction
 from .reaction_set import ReactionSet
@@ -45,6 +48,8 @@ class ReactionSystem():
             if not isinstance(steps, int) or steps < 0: raise ExceptionReactionSystem.InvalidNumber()
             formula = And(formula, self._fbs(self.cause(symbol), steps))
         
+        if isinstance(formula, Constant):
+            return formula
         return espresso_exprs(formula.to_dnf())[0]
 
 
