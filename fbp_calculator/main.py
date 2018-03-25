@@ -176,6 +176,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             'Writtern by William Guglielmo')
 
 
+    # def reaction_list2text(self):
+    #     self.reaction_list
+    #     result = ''
+    #     for reaction in reaction_list:
+            
+    #     return ''
+        
+    # def text2reaction_list(self):
+    #     return []
+
+
     def saveFile(self):
         if self.current_file_name:
             try:
@@ -310,14 +321,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
 
     def tableWidgetProperties_initialize(self):
-        
-        if self.tableWidgetProperties.columnCount() > self.spinBoxCalculatorSteps.value():
+        if self.tableWidgetProperties.columnCount() > self.spinBoxCalculatorSteps.value():        
             self.tableWidgetProperties.setColumnCount(self.spinBoxCalculatorSteps.value())
 
         for _ in range(self.tableWidgetProperties.columnCount(), self.spinBoxCalculatorSteps.value()):
-            self.tableWidgetProperties_addColumn()
             if self.tableWidgetProperties.horizontalScrollBar().maximum() != 0:
                 break
+            self.tableWidgetProperties_addColumn()
         
         self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
     
@@ -327,7 +337,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
         if value == None:
             value = self.tableWidgetProperties.horizontalScrollBar().value()
-
 
         for _ in range(self.tableWidgetProperties.columnCount(), self.spinBoxCalculatorSteps.value()):
             if value == self.tableWidgetProperties.horizontalScrollBar().maximum():
