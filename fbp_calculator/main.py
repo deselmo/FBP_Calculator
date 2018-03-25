@@ -5,14 +5,13 @@ import sys
 import os
 import resource
 import re
+import math
 from copy import deepcopy
 
+import threading
+import thread_with_exc
+
 import jsonpickle
-
-from PyQt5 import QtCore, QtGui, QtWidgets
-
-from main_ui import Ui_MainWindowFBP
-from formula_ui import Ui_DialogFBP
 
 from reactionsystem import \
     Reaction, \
@@ -20,19 +19,20 @@ from reactionsystem import \
     ReactionSystem, \
     ExceptionReactionSystem
 
-import thread_with_exc
-import threading
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-import math
+from main_ui import Ui_MainWindowFBP
+from formula_ui import Ui_DialogFBP
 
 from pyeda.inter import Not
-from pyeda.boolalg.expr import Constant
-from pyeda.boolalg.expr import Literal
-from pyeda.boolalg.expr import Variable
-from pyeda.boolalg.expr import Complement
-from pyeda.boolalg.expr import NotOp
-from pyeda.boolalg.expr import AndOp
-from pyeda.boolalg.expr import OrOp
+from pyeda.boolalg.expr import \
+    Constant, \
+    Literal, \
+    Variable, \
+    Complement, \
+    NotOp, \
+    AndOp, \
+    OrOp
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
