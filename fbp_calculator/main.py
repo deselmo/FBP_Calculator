@@ -116,9 +116,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         if not self.current_file_name:
             return
 
-        file = open(self.current_file_name, 'r')
-        file_content = file.read()
-        file.close()
+        try:
+            with open(self.current_file_name, 'r') as file:
+                file_content = file.read()
+        except Exception as e:
+            error_message = str(e)
+            if 'Errno' in error_message:
+                error_message = error_message.split('] ')[1]
+            QtWidgets.QMessageBox.critical(self,
+                'Error when opening the file',
+                '{}'.format(error_message),
+                QtWidgets.QMessageBox.Close,
+                QtWidgets.QMessageBox.Close)
+            return
         
         try:
             reaction_list_opened = jsonpickle.decode(file_content)
@@ -168,9 +178,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
     def saveFile(self):
         if self.current_file_name:
-            file = open(self.current_file_name, 'w')
-            file.write(jsonpickle.encode(self.reaction_list))
-            file.close()
+            try:
+                with open(self.current_file_name, 'w') as file:
+                    file.write(jsonpickle.encode(self.reaction_list))
+            except Exception as e:
+                error_message = str(e)
+                if 'Errno' in error_message:
+                    error_message = error_message.split('] ')[1]
+                QtWidgets.QMessageBox.critical(self,
+                    'Error when saving the file',
+                    '{}'.format(error_message),
+                    QtWidgets.QMessageBox.Close,
+                    QtWidgets.QMessageBox.Close)
+                return
             self.actionSave.setEnabled(False)
             self.notify('File ' + self.current_file_name + ' saved')
 
