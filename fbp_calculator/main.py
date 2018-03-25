@@ -90,27 +90,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
                 app.desktop().availableGeometry()))
 
 
-    def pushButtonCalculate_clicked(self):
-        steps = self.tableWidgetProperties.columnCount()
-
-        for j in range(0, steps):
-            symbols_true = Reaction._create_symbol_set(self.tableWidgetProperties.cellWidget(0, j).text())
-            symbols_false = Reaction._create_symbol_set(self.tableWidgetProperties.cellWidget(1, j).text())
-            intersectionSet = symbols_true.intersection(symbols_false)
-            if len(intersectionSet):
-                self.notify('Error in context properties step {}: {}'.format(str(j+1), ' '.join(intersectionSet)))
-                return
-
-
-        FormulaWindow(self).show()
-
+    def resizeEvent(self, event):
+        self.pushButtonCalculate_enable()
 
     def closeEvent(self, event):
         event.ignore()
         self.actionQuit_triggered()
 
-    def resizeEvent(self, event):
-        self.pushButtonCalculate_enable()
 
     def actionNew_triggered(self, value=None):
         if not self.check_save():
@@ -118,7 +104,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.current_file_name = ''
         self.reaction_list.clear()
         self.listWidgetReactions_clear()
-
 
     def actionOpen_triggered(self, value=None):
         if not self.check_save():
@@ -155,14 +140,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
         self.notify('File ' + self.current_file_name + ' opened')
 
-
     def actionSave_triggered(self, value=None):
         if not self.current_file_name:
             self.actionSave_as_triggered()
             return
         self.saveFile()
     
-
     def actionSave_as_triggered(self, value=None):
         self.current_file_name, _ = \
             QtWidgets.QFileDialog.getSaveFileName(self, 
@@ -171,7 +154,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
                 'JSON files (*.json)')
         self.saveFile()
 
-    
+    def actionQuit_triggered(self, value=None):
+        if not self.check_save():
+            return
+        QtCore.QCoreApplication.quit()
+
+    def actionAbout_triggered(self):
+        QtWidgets.QMessageBox.about(self,
+            self._translate('MainWindow', 'FBP Calculator'),
+            'version 1.0.0\n' +
+            'Writtern by William Guglielmo')
+
+
     def saveFile(self):
         if self.current_file_name:
             file = open(self.current_file_name, 'w')
@@ -179,13 +173,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             file.close()
             self.actionSave.setEnabled(False)
             self.notify('File ' + self.current_file_name + ' saved')
-
-
-    def actionQuit_triggered(self, value=None):
-        if not self.check_save():
-            return
-        QtCore.QCoreApplication.quit()
-
 
     def check_save(self):
         if self.actionSave.isEnabled() and len(self.reaction_list):
@@ -202,13 +189,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             else:
                 return False
         return True
-
-
-    def actionAbout_triggered(self):
-        QtWidgets.QMessageBox.about(self,
-            self._translate('MainWindow', 'FBP Calculator'),
-            'version 1.0.0\n' +
-            'Writtern by William Guglielmo')
 
     
     def pushButtonAdd_clicked(self):
@@ -234,37 +214,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.pushButtonCalculate_enable()
         self.actionSave.setEnabled(True)
 
-
     def pushButtonAdd_enable(self, string=None):
         if self.lineEditReactants.text() != '' and self.lineEditProducts.text() != '':
             self.pushButtonAdd.setEnabled(True)
         else:
             self.pushButtonAdd.setEnabled(False)
-
-
-    def listWidgetReactions_addReaction(self, reaction):
-        item = QtWidgets.QListWidgetItem(str(reaction))
-        item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
-        item.setCheckState(QtCore.Qt.Unchecked)
-        self.listWidgetReactions.addItem(item)
-    
-
-    def listWidgetReactions_itemChanged(self, item):
-        if item.checkState():
-            self.listWidgetReactions._checked_item_number += 1
-            self.pushButtonDelete.setEnabled(True)
-        else:
-            self.listWidgetReactions._checked_item_number -= 1
-            if not self.listWidgetReactions._checked_item_number:
-                self.pushButtonDelete.setEnabled(False)
-    
-
-    def listWidgetReactions_clear(self):
-        self.listWidgetReactions.clear()
-        self.listWidgetReactions._checked_item_number = 0
-        self.pushButtonDelete.setEnabled(False)
-        self.actionSave.setEnabled(False)
-        self.pushButtonCalculate_enable()
 
 
     def pushButtonDelete_clicked(self):
@@ -284,6 +238,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.actionSave.setEnabled(True)
 
 
+    def pushButtonCalculate_clicked(self):
+        steps = self.tableWidgetProperties.columnCount()
+
+        for j in range(0, steps):
+            symbols_true = Reaction._create_symbol_set(self.tableWidgetProperties.cellWidget(0, j).text())
+            symbols_false = Reaction._create_symbol_set(self.tableWidgetProperties.cellWidget(1, j).text())
+            intersectionSet = symbols_true.intersection(symbols_false)
+            if len(intersectionSet):
+                self.notify('Error in context properties step {}: {}'.format(str(j+1), ' '.join(intersectionSet)))
+                return
+
+
+        FormulaWindow(self).show()
+
     def pushButtonCalculate_enable(self, string=None):
         if self.lineEditCalculatorSymbols.text() != '' \
                 and self.spinBoxCalculatorSteps.value() != 0 \
@@ -296,6 +264,29 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         else:
             self.pushButtonCalculate.setEnabled(False)
             self.tableWidgetProperties.setEnabled(False)
+
+
+    def listWidgetReactions_addReaction(self, reaction):
+        item = QtWidgets.QListWidgetItem(str(reaction))
+        item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
+        item.setCheckState(QtCore.Qt.Unchecked)
+        self.listWidgetReactions.addItem(item)
+    
+    def listWidgetReactions_itemChanged(self, item):
+        if item.checkState():
+            self.listWidgetReactions._checked_item_number += 1
+            self.pushButtonDelete.setEnabled(True)
+        else:
+            self.listWidgetReactions._checked_item_number -= 1
+            if not self.listWidgetReactions._checked_item_number:
+                self.pushButtonDelete.setEnabled(False)
+    
+    def listWidgetReactions_clear(self):
+        self.listWidgetReactions.clear()
+        self.listWidgetReactions._checked_item_number = 0
+        self.pushButtonDelete.setEnabled(False)
+        self.actionSave.setEnabled(False)
+        self.pushButtonCalculate_enable()
 
 
     def tableWidgetProperties_initialize(self):
@@ -331,15 +322,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
         self.tableWidgetProperties.setHorizontalHeaderItem(column, QtWidgets.QTableWidgetItem(str(column+1)))
         for i in range(0, self.tableWidgetProperties.rowCount()):
-            self.tableWidgetProperties_addCell(i, column)
-
-    def tableWidgetProperties_addCell(self, row, column):
-        cellWidget = self.tableWidgetProperties.cellWidget(row, column)
-        if cellWidget == None:
-            lineEdit = QtWidgets.QLineEdit()
-            lineEdit.setValidator(self.validatorLineEditSymbols)
-            lineEdit.returnPressed.connect(self.pushButtonCalculate.click)
-            self.tableWidgetProperties.setCellWidget(row, column, lineEdit)
+            cellWidget = self.tableWidgetProperties.cellWidget(i, column)
+            if cellWidget == None:
+                lineEdit = QtWidgets.QLineEdit()
+                lineEdit.setValidator(self.validatorLineEditSymbols)
+                lineEdit.returnPressed.connect(self.pushButtonCalculate.click)
+                self.tableWidgetProperties.setCellWidget(i, column, lineEdit)        
 
 
     def statusbarChanged(self, string):
@@ -426,24 +414,17 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.qthreadCalculateFBP.finished.connect(self.qthreadCalculateFBP_finished)
         self.qthreadCalculateFBP.start()
 
-    def closeEvent(self, event):
-        self.qthreadCalculateFBP.stop()
-        self.qthreadCalculateFBP.wait()
-        event.accept()
-    
+
     def resizeEvent(self, event):
         self.listFormula_scrollBar_valueChanged()
         self.tableWidgetFormula_horizontalScrollBar_valueChanged()
         self.tableWidgetFormula_verticalScrollBar_valueChanged()
 
-    def comboBoxFormulaType_currentIndexChanged(self, index):
-        if index == 0:
-            self.textBrowserFormula_show()
-        elif index == 1:
-            self.listFormula_show()
-        elif index == 2:
-            self.tableWidgetFormula_show()
-
+    def closeEvent(self, event):
+        self.qthreadCalculateFBP.stop()
+        self.qthreadCalculateFBP.wait()
+        event.accept()
+    
     def qthreadCalculateFBP_finished(self):
         if self.qthreadCalculateFBP.stopped:
             return
@@ -463,6 +444,15 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.comboBoxFormulaType_currentIndexChanged(self.formulaType_defaultIndex)
 
         self.raise_()
+
+
+    def comboBoxFormulaType_currentIndexChanged(self, index):
+        if index == 0:
+            self.textBrowserFormula_show()
+        elif index == 1:
+            self.listFormula_show()
+        elif index == 2:
+            self.tableWidgetFormula_show()
 
 
     def textBrowserFormula_show(self):
@@ -672,7 +662,6 @@ class ThreadCalculateFBP(thread_with_exc.Thread):
     def __init__(self, parent):
         self.parent = parent
         super(ThreadCalculateFBP, self).__init__()
-
 
     @staticmethod
     def case_literal(formula):
