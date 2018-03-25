@@ -13,12 +13,6 @@ class Reaction:
         self.P = P
         self.I = I
 
-
-    def _check_reaction_applicability(self):
-        if self.R.issubset(self.I):
-            raise ExceptionReactionSystem.ImpossibleReaction()
-
-
     @staticmethod
     def _check_symbol(e):
         if not isinstance(e, str) or not e.isalpha(): raise ExceptionReactionSystem.SymbolsMustBeLetters()
@@ -54,8 +48,6 @@ class Reaction:
         if len(setR) == 0: raise ExceptionReactionSystem.ReactantSetCannotBeEmpty()
         self._R = setR
 
-        self._check_reaction_applicability()
-
 
     @property
     def P(self): return self._P
@@ -78,8 +70,6 @@ class Reaction:
     def I(self, I):
         setI = Reaction._create_symbol_set(I)
         self._I = setI
-
-        self._check_reaction_applicability()
 
 
     def ap(self):

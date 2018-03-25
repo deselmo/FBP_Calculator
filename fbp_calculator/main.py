@@ -403,9 +403,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
         
     def _manageExceptionReactionSystem(self, e):
-        if isinstance(e, ExceptionReactionSystem.ImpossibleReaction):
-            message = 'Error: this reaction can never happened'
-        elif isinstance(e, ExceptionReactionSystem.SymbolsMustBeLetters):
+        if isinstance(e, ExceptionReactionSystem.SymbolsMustBeLetters):
             message = 'Error: symbols must be strings of letters'
         elif isinstance(e, ExceptionReactionSystem.ReactantSetCannotBeEmpty):
             message = 'Error: reactants cannot be empty'
