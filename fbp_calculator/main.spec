@@ -4,12 +4,11 @@ block_cipher = None
 
 import sys; sys.setrecursionlimit(10000)
 
-
 a = Analysis(['main.py'],
              pathex=['/home/william/Desktop/project'],
              binaries=[],
              datas=[],
-			 hiddenimports=['six', 'appdirs', 'packaging', 'packaging.version', 'packaging.specifiers', 'packaging.requirements'],
+			 hiddenimports=['pyeda', 'PyQt5', 'six', 'appdirs', 'packaging', 'packaging.version', 'packaging.specifiers', 'packaging.requirements'],
 			 hookspath=[],
              runtime_hooks=[],
              excludes=[],
