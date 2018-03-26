@@ -16,10 +16,11 @@ from reactionsystem import \
     ReactionSystem, \
     ExceptionReactionSystem
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-
 from main_ui import Ui_MainWindowFBP
 from formula_ui import Ui_DialogFBP
+
+
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from pyeda.inter import Not
 from pyeda.boolalg.expr import \
