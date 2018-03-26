@@ -98,14 +98,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def actionNew_triggered(self, value=None):
         if not self.check_save():
             return
+            
         self.spinBoxCalculatorSteps.setValue(1)
         self.tableWidgetProperties.cellWidget(0,0).setText('')
         self.tableWidgetProperties.cellWidget(1,0).setText('')
         self.lineEditCalculatorSymbols.setText('')
         self.lineEditReactants.setText('')
-        self.lineEditReactants.setFocus(True)
         self.lineEditProducts.setText('')
         self.lineEditInhibitors.setText('')
+        self.lineEditReactants.setFocus(True)
+
         self.current_file_name = ''
         self.reaction_list.clear()
         self.listWidgetReactions_clear()
