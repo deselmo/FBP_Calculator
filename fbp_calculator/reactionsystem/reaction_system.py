@@ -37,9 +37,9 @@ class ReactionSystem():
     def cause(self, symbol):
         return self.A.cause(symbol)
 
-    def fbp(self, symbols, steps, context_true_set=set(), context_false_set=set()):
-        self._context_true_set = context_true_set
-        self._context_false_set = context_false_set
+    def fbp(self, symbols, steps, context_given_set=set(), context_not_given_set=set()):
+        self._context_given_set = context_given_set
+        self._context_not_given_set = context_not_given_set
         
         symbolSet = Reaction._create_symbol_set(symbols)
         formula = True
@@ -59,7 +59,12 @@ class ReactionSystem():
 
         elif isinstance(formula, Variable):
             symbol = formula.name
-            formula_result = exprvar(symbol, i)
+            if (i,symbol) in self._context_given_set:
+                formula_result = expr(True)
+            elif (i,symbol) in self._context_not_given_set:
+                formula_result = expr(False)
+            else:
+                formula_result = exprvar(symbol, i)
             if i > 0:
                 formula_result = Or(formula_result, self._fbs(self.cause(symbol), i-1))
 

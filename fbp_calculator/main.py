@@ -47,7 +47,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.temp_file_name = ''
         self.current_file_name = ''
 
-        self.validatorLineEditSymbols = QtGui.QRegExpValidator(QtCore.QRegExp("^[a-zA-Z ]+$")) # pylint: disable=W1401
+        self.validatorLineEditSymbols = QtGui.QRegExpValidator(QtCore.QRegExp('^[a-zA-Z ]+$')) # pylint: disable=W1401
 
         self.lineEditReactants.setValidator(self.validatorLineEditSymbols)
         self.lineEditProducts.setValidator(self.validatorLineEditSymbols)
@@ -98,6 +98,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def actionNew_triggered(self, value=None):
         if not self.check_save():
             return
+        self.spinBoxCalculatorSteps.setValue(1)
+        self.tableWidgetProperties.cellWidget(0,0).setText('')
+        self.tableWidgetProperties.cellWidget(1,0).setText('')
+        self.lineEditCalculatorSymbols.setText('')
+        self.lineEditReactants.setText('')
+        self.lineEditReactants.setFocus(True)
+        self.lineEditProducts.setText('')
+        self.lineEditInhibitors.setText('')
         self.current_file_name = ''
         self.reaction_list.clear()
         self.listWidgetReactions_clear()
@@ -300,18 +308,52 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
 
     def pushButtonCalculate_clicked(self):
-        steps = self.tableWidgetProperties.columnCount()
+        if not self.pushButtonCalculate_generateContextPropertieSet():
+            return
 
-        for j in range(0, steps):
-            symbols_true = Reaction._create_symbol_set(self.tableWidgetProperties.cellWidget(0, j).text())
-            symbols_false = Reaction._create_symbol_set(self.tableWidgetProperties.cellWidget(1, j).text())
-            intersectionSet = symbols_true.intersection(symbols_false)
+        FormulaWindow(self,
+            deepcopy(self.lineEditCalculatorSymbols.text()),
+            deepcopy(self.spinBoxCalculatorSteps.value()),
+            ReactionSystem(ReactionSet(deepcopy(self.reaction_list))),
+            deepcopy(self.context_given_set[0]),
+            deepcopy(self.context_given_set[1])
+        ).show()
+
+    def pushButtonCalculate_generateContextPropertieSet(self):
+        self.context_given_set = [set(), set()]
+        steps = self.spinBoxCalculatorSteps.value()
+
+        for j in range(0, self.tableWidgetProperties.columnCount()):
+            for i in range(0, len(self.context_given_set)):
+                cellContent = self.tableWidgetProperties.cellWidget(i, j).text()
+
+                pattern = '%[a-zA-Z]+'
+                context_given_from = re.findall(pattern, cellContent)
+                context_given = re.sub(pattern, '', cellContent)
+
+                if '%' in context_given:
+                    self.notify('Error in context properties step {}: %'.format(str(j+1)))
+                    return False
+                
+                context_given = re.sub(' +', ' ', context_given)
+                context_given = context_given.split(' ')
+                context_given = list(filter(lambda s: s != '', context_given))
+                context_given = set(map(lambda s: (j, s), context_given))
+                context_given_from = set(map(lambda s: s[1:], context_given_from))
+                
+                self.context_given_set[i] = self.context_given_set[i].union(context_given)
+
+                for z in range(j, steps):
+                    for symbol in context_given_from:
+                        self.context_given_set[i].add((z, symbol))
+
+            intersectionSet = self.context_given_set[0].intersection(self.context_given_set[1])
             if len(intersectionSet):
-                self.notify('Error in context properties step {}: {}'.format(str(j+1), ' '.join(intersectionSet)))
-                return
-
-
-        FormulaWindow(self).show()
+                symbols_set = sorted(list(set(map(lambda t: t[1], intersectionSet))))
+                self.notify('Error in context properties step {}: {}'.format(str(j+1), ' '.join(symbols_set)))
+                return False
+        
+        return True
 
     def pushButtonCalculate_enable(self, string=None):
         if self.lineEditCalculatorSymbols.text() != '' \
@@ -325,6 +367,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         else:
             self.pushButtonCalculate.setEnabled(False)
             self.tableWidgetProperties.setEnabled(False)
+
 
 
     def listWidgetReactions_addReaction(self, reaction):
@@ -385,8 +428,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             cellWidget = self.tableWidgetProperties.cellWidget(i, column)
             if cellWidget == None:
                 lineEdit = QtWidgets.QLineEdit()
-                lineEdit.setValidator(self.validatorLineEditSymbols)
+                lineEdit.setValidator(QtGui.QRegExpValidator(QtCore.QRegExp("^[a-zA-Z %]+$")))
                 lineEdit.returnPressed.connect(self.pushButtonCalculate.click)
+                lineEdit.setStatusTip("Example: A B %C D (%C means C from this step)")
                 self.tableWidgetProperties.setCellWidget(i, column, lineEdit)
         self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
@@ -424,7 +468,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         
 
 class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
-    def __init__(self, parent):
+    def __init__(self, parent,
+            symbols, steps, rs, context_given_set, context_not_given_set):
         super(FormulaWindow, self).__init__(parent)
         self.setupUi(self)
 
@@ -436,24 +481,11 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.listFormula.setVisible(self.formulaType_defaultIndex == 1)
         self.tableWidgetFormula.setVisible(self.formulaType_defaultIndex == 2)
 
-        self.parent = parent
-        self.symbols = deepcopy(parent.lineEditCalculatorSymbols.text())
-        self.steps = deepcopy(parent.spinBoxCalculatorSteps.value())
-        self.rs = ReactionSystem(ReactionSet(deepcopy(parent.reaction_list)))
-        
-        columnCount = parent.tableWidgetProperties.columnCount()
-
-        self.context_true_set = set()
-        self.context_false_set = set()
-
-        for j in range(0, columnCount):
-            symbols_true = Reaction._create_symbol_set(parent.tableWidgetProperties.cellWidget(0, j).text())
-            for symbol in symbols_true:
-                self.context_true_set.add((j, symbol))
-            
-            symbols_false = Reaction._create_symbol_set(parent.tableWidgetProperties.cellWidget(1, j).text())
-            for symbol in symbols_false:
-                self.context_false_set.add((j, symbol))
+        self.symbols = symbols
+        self.steps = steps
+        self.rs = rs
+        self.context_given_set = context_given_set
+        self.context_not_given_set = context_not_given_set
 
         self.lineEditSymbols.setText(self.symbols)
         self.lineEditSteps.setText(str(self.steps))
@@ -488,17 +520,18 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         if self.QThreadCalculatorFBP.stopped:
             return
 
+        self.labelLoadingImage.setVisible(False)
+        self.labelLoadingImage.movie().stop()
+
         try:
             self.formula = self.QThreadCalculatorFBP.result['formula']
             self.formula_table = self.QThreadCalculatorFBP.result['formula_table']
         except Exception:
-            self.parent.notify('Error in fbp calculation')
-            self.close()
+            self.labelComputing.setStyleSheet("QLabel { color : red; font-weight:600; }")
+            self.labelComputing.setText('Error in fbp calculation')
             return
 
         self.labelComputing.setVisible(False)
-        self.labelLoadingImage.setVisible(False)
-        self.labelLoadingImage.movie().stop()
 
         self.comboBoxFormulaType.setEnabled(True)
         self.comboBoxFormulaType_currentIndexChanged(self.formulaType_defaultIndex)
@@ -709,7 +742,13 @@ class QThreadCalculatorFBP(QtCore.QThread):
 
     def __init__(self, dialog):
         self.result = multiprocessing.Manager().dict()
-        self._process = ProcessCalculateFBP(dialog.steps, dialog.symbols, dialog.rs, self.result)
+        self._process = ProcessCalculateFBP(
+            dialog.steps,
+            dialog.symbols,
+            dialog.rs,
+            dialog.context_given_set,
+            dialog.context_not_given_set,
+            self.result)
         self._process.daemon = True
 
         super(QThreadCalculatorFBP, self).__init__()
@@ -726,13 +765,52 @@ class QThreadCalculatorFBP(QtCore.QThread):
 
 
 class ProcessCalculateFBP(multiprocessing.Process):
-    def __init__(self, steps, symbols, rs, result):
+    def __init__(self, steps, symbols, rs, context_given_set, context_not_given_set, result):
         self.steps = steps
         self.symbols = symbols
         self.rs = rs
+        self.context_given_set = context_given_set
+        self.context_not_given_set = context_not_given_set
         self.result = result
 
         super(ProcessCalculateFBP, self).__init__()
+
+    def run(self):
+        formula = self.rs.fbp(
+            self.symbols, self.steps-1,
+            self.context_given_set, self.context_not_given_set)
+
+        if isinstance(formula, Constant):
+            self.result['formula'] = formula.VALUE
+            self.result['formula_table'] = formula.VALUE
+            return
+
+        if isinstance(formula, Literal):
+            formula_list_or = [[ProcessCalculateFBP.case_literal(formula)]]
+
+        elif isinstance(formula, AndOp):
+            formula_list_or = [ProcessCalculateFBP.case_andOp(formula)]
+
+        elif isinstance(formula, OrOp):
+            formula_list_or = ProcessCalculateFBP.case_orOp(formula)
+        
+        formula_list_or = list(map(lambda x: sorted(x), formula_list_or))
+        formula_list_or.sort()
+        
+        formula_table_or = []
+        for formula_list_and in formula_list_or:
+            formula_dict_and = {}
+            for formula in formula_list_and:
+                n, s = formula
+                n -= 1
+                if n in formula_dict_and:
+                    formula_dict_and[n] += ' ' + s
+                else:
+                   formula_dict_and[n] = s
+            formula_table_or.append(formula_dict_and)
+
+        self.result['formula'] = formula_list_or
+        self.result['formula_table'] = formula_table_or
 
 
     @staticmethod
@@ -759,42 +837,7 @@ class ProcessCalculateFBP(multiprocessing.Process):
             elif isinstance(formula_and, AndOp):
                 formula_list_or.append(ProcessCalculateFBP.case_andOp(formula_and))
         return formula_list_or
-          
 
-    def run(self):
-        formula = self.rs.fbp(self.symbols, self.steps-1)
-
-        if isinstance(formula, Constant):
-            self.result['formula'] = formula.VALUE
-            self.result['formula_table'] = formula.VALUE
-            return
-
-        if isinstance(formula, Literal):
-            formula_list_or = [[ProcessCalculateFBP.case_literal(formula)]]
-
-        elif isinstance(formula, AndOp):
-            formula_list_or = [ProcessCalculateFBP.case_andOp(formula)]
-
-        elif isinstance(formula, OrOp):
-            formula_list_or = ProcessCalculateFBP.case_orOp(formula)
-        
-        map(lambda x: x.sort(), formula_list_or)
-        formula_list_or.sort()
-        
-        formula_table_or = []
-        for formula_list_and in formula_list_or:
-            formula_dict_and = {}
-            for formula in formula_list_and:
-                n, s = formula
-                n -= 1
-                if n in formula_dict_and:
-                    formula_dict_and[n] += ' ' + s
-                else:
-                   formula_dict_and[n] = s
-            formula_table_or.append(formula_dict_and)
-
-        self.result['formula'] = formula_list_or
-        self.result['formula_table'] = formula_table_or
 
 
 def increase_recursion_limit():

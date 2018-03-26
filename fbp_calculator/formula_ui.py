@@ -11,8 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_DialogFBP(object):
     def setupUi(self, DialogFBP):
         DialogFBP.setObjectName("DialogFBP")
-        DialogFBP.resize(320, 336)
-        DialogFBP.setWindowTitle("")
+        DialogFBP.resize(380, 400)
         self.gridLayout = QtWidgets.QGridLayout(DialogFBP)
         self.gridLayout.setObjectName("gridLayout")
         self.lineEditSymbols = QtWidgets.QLineEdit(DialogFBP)
@@ -115,6 +114,7 @@ class Ui_DialogFBP(object):
 
     def retranslateUi(self, DialogFBP):
         _translate = QtCore.QCoreApplication.translate
+        DialogFBP.setWindowTitle(_translate("DialogFBP", " "))
         self.labelSteps.setText(_translate("DialogFBP", "Steps:"))
         self.comboBoxFormulaType.setItemText(0, _translate("DialogFBP", "Formula"))
         self.comboBoxFormulaType.setItemText(1, _translate("DialogFBP", "List of or"))
