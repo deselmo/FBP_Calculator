@@ -1,13 +1,13 @@
 """
 ReactionSystem is a Python library for manage for manage Reaction System. 
-It depends on Sympy.
+It depends on boolexpr.
 """
 
 try:
-    import sympy
+    import boolexpr
 except ImportError:
-    raise ImportError("ReactionSystem depends on sympy as an external library. ")
-del sympy
+    raise ImportError("ReactionSystem depends on boolexpr as an external library. ")
+del boolexpr
 
 from reactionsystem.release import __version__
 
@@ -17,5 +17,6 @@ if sys.version_info[0] < 2:
 del sys
 
 
+from .var import var
 from .reaction_system import *
 from .exceptions import *

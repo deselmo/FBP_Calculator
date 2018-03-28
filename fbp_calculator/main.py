@@ -820,9 +820,14 @@ class ProcessCalculateFBP(multiprocessing.Process):
     def case_literal(formula):
         if isinstance(formula, Complement):
             formula = Not(formula)
-            return [formula.indices[0]+1, '¬'+formula.name]
+            negative = '¬'
         else:
-            return [formula.indices[0]+1, formula.name]
+            negative = ''
+
+        name, index = str(formula).split('_')
+        name = negative + name
+        index = int(index) + 1
+        return [index, name]
 
     @staticmethod
     def case_andOp(formula):

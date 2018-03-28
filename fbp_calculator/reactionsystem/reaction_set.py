@@ -1,6 +1,6 @@
-from pyeda.inter import \
-    expr, \
-    Or
+from boolexpr import \
+    or_s as Or, \
+    ZERO
     
 from .reaction import Reaction
 from .exceptions import ExceptionReactionSystem
@@ -22,7 +22,7 @@ class ReactionSet(set):
     def cause(self, symbol):
         Reaction._check_symbol(symbol)
 
-        cause = expr(False)
+        cause = ZERO
         for reaction in self:
             if symbol in reaction.P:
                 cause = Or(cause, reaction.ap())

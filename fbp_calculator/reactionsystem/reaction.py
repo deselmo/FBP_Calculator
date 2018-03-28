@@ -1,8 +1,9 @@
-from pyeda.inter import \
-    expr, \
-    exprvar, \
-    Not, \
-    And
+from .var import var
+
+from boolexpr import \
+    not_ as Not, \
+    and_s as And, \
+    ONE
 
 from .exceptions import ExceptionReactionSystem
 
@@ -73,11 +74,11 @@ class Reaction:
 
 
     def ap(self):
-        f = expr(True)
+        f = ONE
         for symbol in self.R:
-            f = And(f, exprvar(symbol))
+            f = And(f, var(symbol))
         for symbol in self.I:
-            f = And(f, Not(exprvar(symbol)))
+            f = And(f, Not(var(symbol)))
         return f
 
 

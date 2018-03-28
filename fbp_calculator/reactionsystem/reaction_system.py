@@ -1,20 +1,24 @@
-from pyeda.inter import \
-    expr, \
-    exprvar, \
-    Not, \
-    And, \
-    Or, \
-    espresso_exprs
+from pyeda.inter import expr
+from pyeda.inter import espresso_exprs
 
-from pyeda.boolalg.expr import \
+from .var import var
+
+from boolexpr import \
+    not_ as Not, \
+    and_s as And, \
+    or_s as Or, \
+    ZERO, \
+    ONE
+
+from boolexpr.wrap import \
+    Atom, \
     Constant, \
     Literal, \
     Variable, \
     Complement, \
-    NotOp, \
-    AndOp, \
-    OrOp
-
+    NegativeOperator as NotOp, \
+    And as AndOp, \
+    Or as OrOp
 
 from .reaction import Reaction
 from .reaction_set import ReactionSet
@@ -48,11 +52,11 @@ class ReactionSystem():
             Reaction._check_symbol(symbol)
             if not isinstance(steps, int) or steps < 0: raise ExceptionReactionSystem.InvalidNumber()
             formula = And(formula, self._fbs(self.cause(symbol), steps))
+
+        formula = expr(str(formula.to_dnf()))
         
-        if (formula.is_dnf() and
-            not isinstance(formula, Constant) and
-            not isinstance(formula, Literal)):
-                formula = espresso_exprs(formula)[0]
+        if  not isinstance(formula, Atom) and formula.is_dnf():
+            formula = espresso_exprs(formula)[0]
 
         return formula
 
@@ -62,13 +66,13 @@ class ReactionSystem():
             formula_result = formula
 
         elif isinstance(formula, Variable):
-            symbol = formula.name
+            symbol = str(formula)
             if (i,symbol) in self._context_given_set:
-                formula_result = expr(True)
+                formula_result = ONE
             elif (i,symbol) in self._context_not_given_set:
-                formula_result = expr(False)
+                formula_result = ZERO
             else:
-                formula_result = exprvar(symbol, i)
+                formula_result = var('{}_{}'.format(symbol, i))
             if i > 0:
                 formula_result = Or(formula_result, self._fbs(self.cause(symbol), i-1))
 
@@ -76,16 +80,16 @@ class ReactionSystem():
             formula_result = Not(self._fbs(Not(formula), i))
 
         elif isinstance(formula, AndOp):
-            formula_result = expr(True)
-            for formula_x in formula.xs:
+            formula_result = ONE
+            for formula_x in formula.args:
                 formula_result = And(formula_result, self._fbs(formula_x, i))
 
         elif isinstance(formula, OrOp):
-            formula_result = expr(False)
-            for formula_x in formula.xs:
+            formula_result = ZERO
+            for formula_x in formula.args:
                 formula_result = Or(formula_result, self._fbs(formula_x, i))
 
-        return formula_result
+        return formula_result.simplify()
 
 
 
