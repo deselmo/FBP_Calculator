@@ -478,7 +478,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
 
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
-        self.formulaType_defaultIndex = 2
+        self.formulaType_defaultIndex = 1
         self.comboBoxFormulaType.setCurrentIndex(self.formulaType_defaultIndex)
         self.textBrowserFormula.setVisible(self.formulaType_defaultIndex == 0)
         self.listFormula.setVisible(self.formulaType_defaultIndex == 1)

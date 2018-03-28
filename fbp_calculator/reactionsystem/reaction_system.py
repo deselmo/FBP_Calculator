@@ -15,6 +15,7 @@ from pyeda.boolalg.expr import \
     AndOp, \
     OrOp
 
+
 from .reaction import Reaction
 from .reaction_set import ReactionSet
 from .exceptions import ExceptionReactionSystem
@@ -48,9 +49,12 @@ class ReactionSystem():
             if not isinstance(steps, int) or steps < 0: raise ExceptionReactionSystem.InvalidNumber()
             formula = And(formula, self._fbs(self.cause(symbol), steps))
         
-        if isinstance(formula, Constant):
-            return formula
-        return espresso_exprs(formula.to_dnf())[0]
+        if (formula.is_dnf() and
+            not isinstance(formula, Constant) and
+            not isinstance(formula, Literal)):
+                formula = espresso_exprs(formula)[0]
+
+        return formula
 
 
     def _fbs(self, formula, i):
@@ -80,10 +84,6 @@ class ReactionSystem():
             formula_result = expr(False)
             for formula_x in formula.xs:
                 formula_result = Or(formula_result, self._fbs(formula_x, i))
-
-        else:
-            print('error ' + str(type(formula)))
-            return False
 
         return formula_result
 
