@@ -32,6 +32,8 @@ from pyeda.boolalg.expr import \
     AndOp, \
     OrOp
 
+import xlsxwriter
+
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def __init__(self, app, parent=None):
@@ -496,8 +498,10 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.labelLoadingImage.setMovie(QtGui.QMovie(":/loader.gif"))
         self.labelLoadingImage.movie().start()
 
-        self.comboBoxFormulaType.currentIndexChanged.connect(self.comboBoxFormulaType_currentIndexChanged)
+        self.toolButtonSave.setVisible(False)
+        self.toolButtonSave.clicked.connect(self.toolButtonSave_clicked)
 
+        self.comboBoxFormulaType.currentIndexChanged.connect(self.comboBoxFormulaType_currentIndexChanged)
 
         self.listFormula.verticalScrollBar().valueChanged.connect(self.listFormula_scrollBar_valueChanged)
         self.tableWidgetFormula.horizontalScrollBar().valueChanged.connect(self.tableWidgetFormula_horizontalScrollBar_valueChanged)
@@ -507,6 +511,88 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.QThreadCalculatorFBP = QThreadCalculatorFBP(self)
         self.QThreadCalculatorFBP.finished.connect(self.QThread_finishedCalculatorFBP)
         self.QThreadCalculatorFBP.start()
+
+    def toolButtonSave_clicked(self):
+        formulaType_index = self.comboBoxFormulaType.currentIndex()
+        if formulaType_index == 0:
+            file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, 
+                'Save result as', 
+                'untitled.txt',
+                'TXT files (*.txt)')
+
+            if not file_name:
+                return
+            try:
+                with open(file_name, 'w') as file:
+                    file.write(self.save_text)
+            except Exception as e:
+                error_message = str(e)
+                if 'Errno' in error_message:
+                    error_message = error_message.split('] ')[1]
+                QtWidgets.QMessageBox.critical(self,
+                    'Error when saving the file',
+                    '{}'.format(error_message),
+                    QtWidgets.QMessageBox.Close,
+                    QtWidgets.QMessageBox.Close)
+
+        elif formulaType_index == 1:
+            file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, 
+                'Save result as', 
+                'untitled.txt',
+                'TXT files (*.txt)')
+            
+            if not file_name:
+                return
+            try:
+                with open(file_name, 'w') as file:
+                    file.write(self.save_list)
+            except Exception as e:
+                error_message = str(e)
+                if 'Errno' in error_message:
+                    error_message = error_message.split('] ')[1]
+                QtWidgets.QMessageBox.critical(self,
+                    'Error when saving the file',
+                    '{}'.format(error_message),
+                    QtWidgets.QMessageBox.Close,
+                    QtWidgets.QMessageBox.Close)
+
+        elif formulaType_index == 2:
+            file_name, _ = QtWidgets.QFileDialog.getSaveFileName(self, 
+                'Save result as', 
+                'untitled.xlsx',
+                'XLSX files (*.xlsx)')
+            
+            if not file_name:
+                return
+            workbook = xlsxwriter.Workbook(file_name)
+            worksheet = workbook.add_worksheet()
+
+            if isinstance(self.formula, bool):
+                worksheet.write(0, 0, str(self.formula))
+
+            else:
+                for i in range(0, self.steps):
+                    worksheet.write(0, i, str(i+1))
+
+                for i in range(0, len(self.formula_table)):
+                    row = self.formula_table[i]
+                    for column in row:
+                        text = row[column]
+                        worksheet.write(i+1, column, text)
+
+            try:
+                workbook.close()
+            except Exception as e:
+                error_message = str(e)
+                if 'Errno' in error_message:
+                    error_message = error_message.split('] ')[1]
+                QtWidgets.QMessageBox.critical(self,
+                    'Error when saving the file',
+                    '{}'.format(error_message),
+                    QtWidgets.QMessageBox.Close,
+                    QtWidgets.QMessageBox.Close)
+            
+            
 
 
     def resizeEvent(self, event):
@@ -525,6 +611,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
 
         self.labelLoadingImage.setVisible(False)
         self.labelLoadingImage.movie().stop()
+        self.labelComputing.setVisible(False)
 
         try:
             self.formula = self.QThreadCalculatorFBP.result['formula']
@@ -534,7 +621,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
             self.labelComputing.setText('Error in fbp calculation')
             return
 
-        self.labelComputing.setVisible(False)
+        self.toolButtonSave.setVisible(True)
 
         self.comboBoxFormulaType.setEnabled(True)
         self.comboBoxFormulaType_currentIndexChanged(self.formulaType_defaultIndex)
@@ -562,21 +649,27 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
             
     def textBrowserFormula_initialize(self):
         if isinstance(self.formula, bool):
-            self.textBrowserFormula.setText(str(self.formula))
+            text = str(self.formula)
+            self.textBrowserFormula.setText(text)
+            self.save_text = text
             return
 
-        stringFormula = ''
+        text_subbed = ''
         prebrackets = len(self.formula) > 1
         for i in range(0, len(self.formula)):
-            if i > 0: stringFormula += ' ∨ '
+            if i > 0: text_subbed += ' ∨ '
             backets = prebrackets and len(self.formula[i]) > 1
-            if backets: stringFormula += '('
+            if backets: text_subbed += '('
             for j in range(0, len(self.formula[i])):
-                if j > 0: stringFormula += ' ∧ '
+                if j > 0: text_subbed += ' ∧ '
                 n, s = self.formula[i][j]
-                stringFormula += '{}<sub>{}</sub>'.format(s, str(n))
-            if backets: stringFormula += ')'
-        self.textBrowserFormula.setText(stringFormula)
+                text_subbed += '{}<sub>{}</sub>'.format(s, str(n))
+            if backets: text_subbed += ')'
+        self.textBrowserFormula.setText(text_subbed)
+        save_text = text_subbed
+        save_text = re.sub('<sub>', '_', save_text)
+        save_text = re.sub('</sub>', '', save_text)
+        self.save_text = save_text
 
 
     def listFormula_show(self):
@@ -592,8 +685,19 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
             
     def listFormula_initialize(self):
         if isinstance(self.formula, bool):
-            self.listFormula.addItem(QtWidgets.QListWidgetItem(str(self.formula)))
+            text = str(self.formula)
+            self.listFormula.addItem(QtWidgets.QListWidgetItem(text))
+            self.save_list = text
             return
+        
+        text = ''
+        for f in self.formula:
+            for i in range(0, len(f)):
+                n, s = f[i]
+                text += '{}_{} '.format(s, str(n))
+            text = text[:-1]
+            text += '\r\n'
+        self.save_list = text
 
         self.listFormula_fillSpace()
 
@@ -620,13 +724,13 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
 
     def listFormula_addRow(self):
         f = self.formula[self.listFormula.count()]
-        string = ''
+        text = ''
         for i in range(0, len(f)):
-            if i > 0: string += ' '
             n, s = f[i]
-            string += '{}<sub>{}</sub>'.format(s, str(n))
+            text += '{}<sub>{}</sub> '.format(s, str(n))
+        text = text[:-1]
 
-        label = QtWidgets.QLabel(string)
+        label = QtWidgets.QLabel(text)
         label.setContentsMargins(4,4,4,4)
         item = QtWidgets.QListWidgetItem()
         item.setSizeHint(label.sizeHint())
@@ -729,7 +833,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         if cellWidget == None:
             label = QtWidgets.QLabel(text)
             label.setContentsMargins(8,2,8,2)
-            label.setAlignment(QtCore.Qt.AlignCenter)
+            label.setAlignment(QtCore.Qt.AlignLeft)
             self.tableWidgetFormula.setCellWidget(row, column, label)
         else:
             raise Exception('Add a cell more than one time')

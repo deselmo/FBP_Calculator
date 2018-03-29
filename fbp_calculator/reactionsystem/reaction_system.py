@@ -1,5 +1,6 @@
 from pyeda.inter import expr
 from pyeda.inter import espresso_exprs
+from pyeda.boolalg.expr import Atom 
 
 from .var import var
 
@@ -11,7 +12,6 @@ from boolexpr import \
     ONE
 
 from boolexpr.wrap import \
-    Atom, \
     Constant, \
     Literal, \
     Variable, \
@@ -89,7 +89,7 @@ class ReactionSystem():
             for formula_x in formula.args:
                 formula_result = Or(formula_result, self._fbs(formula_x, i))
 
-        return formula_result.simplify()
+        return formula_result
 
 
 
