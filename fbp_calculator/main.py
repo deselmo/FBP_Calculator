@@ -50,11 +50,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.temp_file_name = ''
         self.current_file_name = ''
 
-        self.validatorLineEditSymbols = QtGui.QRegExpValidator(QtCore.QRegExp('^[a-zA-Z ]+$')) # pylint: disable=W1401
+        self.validatorLineEditSymbols_regex = '^([a-zA-Z]|\d|\s|,)+$' # pylint: disable=W1401
+        self.validatorLineEditSymbols = QtGui.QRegExpValidator(QtCore.QRegExp(self.validatorLineEditSymbols_regex))
+        self.validatorLineEditSymbols_empty_regex = '^([a-zA-Z]|\d|\s|,)*$' # pylint: disable=W1401
+        self.validatorLineEditSymbols_empty = QtGui.QRegExpValidator(QtCore.QRegExp(self.validatorLineEditSymbols_empty_regex))
+
+        self.validatorContextProperties_regex = '^([a-zA-Z]|\d|\s|,|%)+$' # pylint: disable=W1401
+        self.validatorContextProperties = QtGui.QRegExpValidator(QtCore.QRegExp(self.validatorContextProperties_regex))
+
 
         self.lineEditReactants.setValidator(self.validatorLineEditSymbols)
         self.lineEditProducts.setValidator(self.validatorLineEditSymbols)
-        self.lineEditInhibitors.setValidator(self.validatorLineEditSymbols)
+        self.lineEditInhibitors.setValidator(self.validatorLineEditSymbols_empty)
         self.lineEditCalculatorSymbols.setValidator(self.validatorLineEditSymbols)
 
         self.statusbar.messageChanged.connect(self.statusbarChanged)
@@ -142,7 +149,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
         try:
             self.reaction_list = self.text2reaction_list(file_content)
-        except ValueError as e:
+        except Exception as e:
             QtWidgets.QMessageBox.critical(self,
                 'Error when opening the file',
                 'Invalid syntax: \'{}\''.format(self.temp_file_name),
@@ -186,45 +193,29 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
 
     @staticmethod 
+    def reaction_adapter(text):
+        return text.replace(',', '__')
+
+    @staticmethod 
+    def reaction_invadapter(text):
+        return text.replace('__', ',')
+        
+    @staticmethod 
     def text2reaction_list(text):
         reaction_list = []
         text.replace('\r', ' ')
-        text.replace('\t', ' ')
         reactions = text.split('\n')
-        reactions_len = len(reactions)
-        for i in range(0, reactions_len):
-            reaction = reactions[i]
-            if reaction == '' or reaction.isspace():
-                for j in range(i, reactions_len):
-                    if not(reactions[j] == '' or reactions[j].isspace):
-                        raise ValueError()
-                break
-            split_r = reaction.split('->')
-            if len(split_r) != 2: raise ValueError()
-            r = split_r[0]
-            split_p = split_r[1].split('|')
-            split_p_len = len(split_p)
-            if split_p_len > 2: raise ValueError()
-            p = split_p[0]
-            i = split_p[1] if split_p_len == 2 else ''
-            try:
-                reaction_list.append(Reaction(r, p, i))
-            except Exception: raise ValueError()
-
+        for reaction in reactions:
+            if (re.match('^\s*#', reaction) or re.match('^\s*$', reaction)): # pylint: disable=W1401
+                continue
+            reaction_list.append(Reaction(MainWindow.reaction_adapter(reaction)))
         return reaction_list
 
     @staticmethod
     def reaction_list2text(reaction_list):
         text = ''
         for reaction in reaction_list:
-            text += ' '.join(reaction.R)
-            text += ' -> '
-            text += ' '.join(reaction.P)
-            if len(reaction.I):
-                text += ' | '
-                text += ' '.join(reaction.I)
-            text += '\r\n'
-        
+            text += MainWindow.reaction_invadapter(str(reaction)) + '\r\n'
         return text
 
 
@@ -271,7 +262,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         inhibitors = self.lineEditInhibitors.text()
 
         try:
-            reaction = Reaction(reactants, products, inhibitors)
+            reaction = Reaction(
+                R=MainWindow.reaction_adapter(reactants),
+                P=MainWindow.reaction_adapter(products),
+                I=MainWindow.reaction_adapter(inhibitors))
         except Exception as e:
             self._manageExceptionReactionSystem(e)
             return
@@ -283,7 +277,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.reaction_list.append(reaction)
 
         self.listWidgetReactions_addReaction(reaction)
-        self.notify('Added ' + str(reaction))
+        self.notify('Added ' + str(reaction).replace('->', '⟶'))
 
         self.pushButtonCalculate_enable()
         self.actionSave.setEnabled(True)
@@ -300,10 +294,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         while self.listWidgetReactions._checked_item_number:
             if self.listWidgetReactions.item(i).checkState():
                 item = self.listWidgetReactions.takeItem(i)
-                splitted = re.split('⟶ | \|', item.text()) # pylint: disable=W1401
-                self.reaction_list.remove(Reaction(
-                    splitted[0], splitted[1], splitted[2]
-                    if len(splitted) == 3  else []))
+                self.reaction_list.remove(Reaction(MainWindow.reaction_adapter(item.text()).replace('⟶', '->')))
                 self.listWidgetReactions._checked_item_number -= 1
             else: i += 1
         self.pushButtonDelete.setEnabled(False)
@@ -317,7 +308,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             return
 
         FormulaWindow(self,
-            deepcopy(self.lineEditCalculatorSymbols.text()),
+            deepcopy(MainWindow.reaction_adapter(self.lineEditCalculatorSymbols.text())),
             deepcopy(self.spinBoxCalculatorSteps.value()),
             ReactionSystem(ReactionSet(deepcopy(self.reaction_list))),
             deepcopy(self.context_given_set[0]),
@@ -330,19 +321,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
         for j in range(0, self.tableWidgetProperties.columnCount()):
             for i in range(0, len(self.context_given_set)):
-                cellContent = self.tableWidgetProperties.cellWidget(i, j).text()
+                cellContent = MainWindow.reaction_adapter(
+                    self.tableWidgetProperties.cellWidget(i, j).text())
+                symbol_regex = Reaction._get_symbol_regex()
 
-                pattern = '%[a-zA-Z]+'
-                context_given_from = re.findall(pattern, cellContent)
-                context_given = re.sub(pattern, '', cellContent)
-
-                if '%' in context_given:
-                    self.notify('Error in context properties step {}: %'.format(str(j+1)))
+                symbol_list_regex = '^\s*(%?{}\s+)*%?{}\s*$'.format(symbol_regex, symbol_regex) # pylint: disable=W1401
+                
+                if (len(cellContent) and not cellContent.isspace() and
+                        not re.match(symbol_list_regex, cellContent)):
+                    self.notify('Error: invalid syntax in step {}'.format(str(j+1)))
                     return False
                 
-                context_given = re.sub(' +', ' ', context_given)
-                context_given = context_given.split(' ')
-                context_given = list(filter(lambda s: s != '', context_given))
+                pattern = '%{}'.format(symbol_regex)
+                context_given_from = re.findall(pattern, cellContent)
+                context_given = re.sub(pattern, '', cellContent)
+                context_given = re.findall(symbol_regex, context_given)
+                
                 context_given = set(map(lambda s: (j, s), context_given))
                 context_given_from = set(map(lambda s: s[1:], context_given_from))
                 
@@ -351,6 +345,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
                 for z in range(j, steps):
                     for symbol in context_given_from:
                         self.context_given_set[i].add((z, symbol))
+                
 
             intersectionSet = self.context_given_set[0].intersection(self.context_given_set[1])
             if len(intersectionSet):
@@ -376,7 +371,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
 
     def listWidgetReactions_addReaction(self, reaction):
-        item = QtWidgets.QListWidgetItem(str(reaction))
+        item = QtWidgets.QListWidgetItem(MainWindow.reaction_invadapter(str(reaction)).replace('->', '⟶'))
         item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
         item.setCheckState(QtCore.Qt.Unchecked)
         self.listWidgetReactions.addItem(item)
@@ -433,7 +428,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             cellWidget = self.tableWidgetProperties.cellWidget(i, column)
             if cellWidget == None:
                 lineEdit = QtWidgets.QLineEdit()
-                lineEdit.setValidator(QtGui.QRegExpValidator(QtCore.QRegExp("^[a-zA-Z %]+$")))
+                lineEdit.setValidator(self.validatorContextProperties)
                 lineEdit.returnPressed.connect(self.pushButtonCalculate.click)
                 lineEdit.setStatusTip("Example: A B %C D (%C means C from this step)")
                 self.tableWidgetProperties.setCellWidget(i, column, lineEdit)
@@ -452,7 +447,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
         
     def _manageExceptionReactionSystem(self, e):
-        if isinstance(e, ExceptionReactionSystem.SymbolsMustBeLetters):
+        if isinstance(e, ExceptionReactionSystem.InvalidSyntax):
             message = 'Error: symbols must be strings of letters'
         elif isinstance(e, ExceptionReactionSystem.ReactantSetCannotBeEmpty):
             message = 'Error: reactants cannot be empty'
@@ -492,7 +487,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
         self.context_given_set = context_given_set
         self.context_not_given_set = context_not_given_set
 
-        self.lineEditSymbols.setText(self.symbols)
+        self.lineEditSymbols.setText(MainWindow.reaction_invadapter(self.symbols))
         self.lineEditSteps.setText(str(self.steps))
         
         self.labelLoadingImage.setMovie(QtGui.QMovie(":/loader.gif"))
@@ -592,7 +587,7 @@ class FormulaWindow(QtWidgets.QDialog, Ui_DialogFBP):
                     QtWidgets.QMessageBox.Close,
                     QtWidgets.QMessageBox.Close)
             
-            
+
 
 
     def resizeEvent(self, event):
@@ -928,7 +923,7 @@ class ProcessCalculateFBP(multiprocessing.Process):
         else:
             negative = ''
 
-        name, index = str(formula).split('_')
+        name, index = MainWindow.reaction_invadapter(str(formula)).split('_')
         name = negative + name
         index = int(index) + 1
         return [index, name]

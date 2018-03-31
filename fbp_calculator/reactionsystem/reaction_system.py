@@ -43,6 +43,9 @@ class ReactionSystem():
         return self.A.cause(symbol)
 
     def fbp(self, symbols, steps, context_given_set=set(), context_not_given_set=set()):
+        # import time
+        # print(time.time())
+
         self._context_given_set = context_given_set
         self._context_not_given_set = context_not_given_set
         
@@ -53,10 +56,11 @@ class ReactionSystem():
             if not isinstance(steps, int) or steps < 0: raise ExceptionReactionSystem.InvalidNumber()
             formula = And(formula, self._fbs(self.cause(symbol), steps))
 
-        formula = expr(str(formula.to_dnf()))
-        
+        formula = expr(str(formula.to_dnf()))        
         if  not isinstance(formula, Atom) and formula.is_dnf():
             formula = espresso_exprs(formula)[0]
+
+        # print(time.time())
 
         return formula
 
@@ -109,13 +113,3 @@ class ReactionSystem():
 
     def __repr__(self):
         return str(self)
-
-
-if __name__ == '__main__':
-    rs = ReactionSystem(ReactionSet({
-        Reaction({'A'},{'B'}),
-        Reaction({'C','D'},{'E','F'}),
-        Reaction({'G'},{'E'},{'B'})
-    }))
-
-    print(rs.fbp('E', 3))

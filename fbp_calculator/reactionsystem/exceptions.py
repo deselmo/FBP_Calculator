@@ -1,5 +1,5 @@
 class ExceptionReactionSystem():
-    class SymbolsMustBeLetters(Exception): pass
+    class InvalidSyntax(Exception): pass
     class ReactantSetCannotBeEmpty(Exception): pass
     class ProductSetCannotBeEmpty(Exception): pass
     class InvalidReaction(Exception): pass

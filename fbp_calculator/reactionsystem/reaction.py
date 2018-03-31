@@ -6,29 +6,61 @@ from boolexpr import \
     ONE
 
 from .exceptions import ExceptionReactionSystem
+import re
 
+separator_regex = '\s' #pylint: disable=W1401
+symbol_regex = '[a-zA-Z]+[a-zA-Z\d__]*' #pylint: disable=W1401
+symbol_list_regex = '{}*({}{}+)*{}{}*'.format(
+    separator_regex,
+    symbol_regex,
+    separator_regex,
+    symbol_regex,
+    separator_regex)
+reaction_regex = '^{}->{}(\|{})?$'.format( #pylint: disable=W1401
+            symbol_list_regex,symbol_list_regex,symbol_list_regex)
 
 class Reaction:
-    def __init__(self, R, P, I = set()):
-        self.R = R
-        self.P = P
-        self.I = I
+    def __init__(self, string='', R='', P='', I=''):
+        if string and Reaction.match(string):
+            split = re.split('(->|\|)', string) #pylint: disable=W1401
+            self.R = split[0]
+            self.P = split[2]
+            self.I = split[4] if len(split) == 5 else I
+        else:
+            self.R = R
+            self.P = P
+            self.I = I
 
     @staticmethod
-    def _check_symbol(e):
-        if not isinstance(e, str) or not e.isalpha(): raise ExceptionReactionSystem.SymbolsMustBeLetters()
+    def match(string):
+        return re.match(reaction_regex, string)
+
+    @staticmethod
+    def _get_symbol_regex():
+        return symbol_regex
+
+    @staticmethod
+    def _get_symbol_list_regex():
+        return symbol_list_regex
+
+    @staticmethod
+    def _check_symbol(s):
+        if (not isinstance(s, str) or
+            not re.match(symbol_regex, s)):
+                raise ExceptionReactionSystem.InvalidSyntax()
 
 
     @staticmethod
     def _create_symbol_set(s):
-        if isinstance(s, str):
-            s = set(s.split(' '))
-            if '' in s:
-                s.remove('')
-        s = frozenset(s)
-        for e in s:
-            Reaction._check_symbol(e)
-        return s
+        if not isinstance(s, str):
+            raise ExceptionReactionSystem.InvalidSyntax()
+        if s == '':
+            return frozenset()
+        if not re.match('^{}$'.format(symbol_list_regex), s):
+            raise ExceptionReactionSystem.InvalidSyntax()
+        s = set(re.sub('{}+'.format(separator_regex),' ',s).split(' ')) #pylint: disable=W1401
+        s.discard('')
+        return frozenset(s)
         
 
     @staticmethod
@@ -95,7 +127,7 @@ class Reaction:
 
 
     def __str__(self):
-        string = '{} ⟶ {}'.format(
+        string = '{} -> {}'.format(
             self._str_frozenset(self.R), self._str_frozenset(self.P))
         return string + (' | {}'.format(self._str_frozenset(self.I)) if len(self.I) > 0 else '')
 
