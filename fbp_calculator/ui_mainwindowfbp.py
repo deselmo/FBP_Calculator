@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/home/william/Desktop/main_ui.ui'
-#
 # Created by: PyQt5 UI code generator 5.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -303,7 +301,7 @@ class Ui_MainWindowFBP(object):
         self.actionNew.setShortcut(_translate("MainWindowFBP", "Ctrl+N"))
         self.actionAbout.setText(_translate("MainWindowFBP", "About"))
 
-import resources_rc
+import fbp_calculator.resources_rc
 
 if __name__ == "__main__":
     import sys

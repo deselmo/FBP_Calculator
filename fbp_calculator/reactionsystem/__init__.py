@@ -1,6 +1,6 @@
 """
 ReactionSystem is a Python library for manage for manage Reaction System. 
-It depends on boolexpr.
+It depends on boolexpr and pyeda.
 """
 
 try:
@@ -9,13 +9,16 @@ except ImportError:
     raise ImportError("ReactionSystem depends on boolexpr as an external library. ")
 del boolexpr
 
-from reactionsystem.release import __version__
+try:
+    import pyeda
+except ImportError:
+    raise ImportError("ReactionSystem depends on pyeda as an external library. ")
+del pyeda
 
 import sys
 if sys.version_info[0] < 2:
     raise ImportError("Python version 3 for ReactionSystem.")
 del sys
-
 
 from .var import var
 from .reaction_system import *

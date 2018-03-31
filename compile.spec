@@ -2,13 +2,16 @@
 
 block_cipher = None
 
-import sys; sys.setrecursionlimit(10000)
+import sys;
+import resource
+resource.setrlimit(resource.RLIMIT_STACK, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
+sys.setrecursionlimit(2**31-1)
 
-a = Analysis(['main.py'],
+a = Analysis(['/fbp_calculator/FBP Calculator.py'],
              pathex=['/home/william/Desktop/project'],
              binaries=[],
              datas=[],
-			 hiddenimports=['pyeda', 'PyQt5', 'six', 'appdirs', 'packaging', 'packaging.version', 'packaging.specifiers', 'packaging.requirements'],
+			 hiddenimports=['boolexpr', 'pyeda', 'PyQt5', 'XlsxWriter', 'six', 'appdirs', 'packaging', 'packaging.version', 'packaging.specifiers', 'packaging.requirements'],
 			 hookspath=[],
              runtime_hooks=[],
              excludes=[],
