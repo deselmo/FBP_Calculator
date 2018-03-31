@@ -7,11 +7,11 @@ import resource
 resource.setrlimit(resource.RLIMIT_STACK, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
 sys.setrecursionlimit(2**31-1)
 
-a = Analysis(['/fbp_calculator/FBP Calculator.py'],
-             pathex=['/home/william/Desktop/project'],
+a = Analysis(['start.py'],
+             pathex=[],
              binaries=[],
              datas=[],
-			 hiddenimports=['boolexpr', 'pyeda', 'PyQt5', 'XlsxWriter', 'six', 'appdirs', 'packaging', 'packaging.version', 'packaging.specifiers', 'packaging.requirements'],
+			 hiddenimports=['six', 'appdirs', 'packaging', 'packaging.version', 'packaging.specifiers', 'packaging.requirements'],
 			 hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -25,7 +25,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='main',
+          name='FBP Calculator',
           debug=False,
           strip=False,
           upx=True,

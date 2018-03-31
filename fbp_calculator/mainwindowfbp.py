@@ -166,7 +166,12 @@ class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         QtWidgets.QMessageBox.about(self,
             self._translate('MainWindowFBP', 'FBP Calculator'),
             'version 1.0.0\n' +
-            'Writtern by William Guglielmo')
+            'Written by William Guglielmo.\n' + \
+            'Based on the work of:\n' + \
+            'Roberto Barbuti\n' + \
+            'Roberta Gori\n' + \
+            'Paolo Milazzo\n' + \
+            'Francesca Levi\n')
 
     @staticmethod 
     def text2reaction_list(text):
