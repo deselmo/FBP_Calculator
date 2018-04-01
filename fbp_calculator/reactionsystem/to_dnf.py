@@ -1,20 +1,11 @@
-from pyeda.boolalg.expr import \
-    And, \
-    Or, \
-    expr, \
-    AndOp, \
-    OrOp
-ZERO = expr(False)
-ONE = expr(True)
-
-# class a():
-#     i = 0
-
-#     def print(self):
-#         print(self.i)
-#         self.i+=1
-
-# a = a()
+from .boolean_wrap import(
+    And,
+    Or,
+    expr,
+    AndOp,
+    OrOp,
+    ZERO,
+    ONE)
 
 def to_dnf(e):
     return nnf_to_dnf(e.to_nnf())

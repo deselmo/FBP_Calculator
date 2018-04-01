@@ -1,10 +1,8 @@
-from .var import var
-
-from pyeda.boolalg.expr import \
-    Not, \
-    And, \
-    expr
-ONE = expr(True)
+from .boolean_wrap import (
+    Not,
+    And,
+    ONE,
+    var)
 
 from .exceptions import ExceptionReactionSystem
 import re

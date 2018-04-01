@@ -1,7 +1,6 @@
-from pyeda.boolalg.expr import \
-    Or, \
-    expr
-ZERO = expr(False)
+from .boolean_wrap import (
+    Or,
+    ZERO)
     
 from .reaction import Reaction
 from .exceptions import ExceptionReactionSystem

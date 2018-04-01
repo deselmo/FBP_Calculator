@@ -2,22 +2,20 @@ from pyeda.inter import expr
 from pyeda.inter import espresso_exprs
 from pyeda.boolalg.expr import Atom 
 
-from .var import var
-
-from pyeda.boolalg.expr import \
-    Not, \
-    And, \
-    Or, \
-    expr, \
-    Constant, \
-    Literal, \
-    Variable, \
-    Complement, \
-    NotOp, \
-    AndOp, \
-    OrOp
-ZERO = expr(False)
-ONE = expr(True)
+from .boolean_wrap import (
+    Not,
+    And,
+    Or,
+    Constant,
+    Literal,
+    Variable,
+    Complement,
+    NotOp,
+    AndOp,
+    OrOp,
+    ZERO,
+    ONE,
+    var)
 
 from .reaction import Reaction
 from .reaction_set import ReactionSet

@@ -8,12 +8,6 @@ if not (sys.version_info[0] == 3 and sys.version_info[1] >= 3):
     raise ImportError("Python version 3.3 or above is required.")
 del sys
 
-# try:
-#     import boolexpr
-# except ImportError:
-#     raise ImportError("ReactionSystem depends on boolexpr as an external library. ")
-# del boolexpr
-
 try:
     import pyeda
 except ImportError:
@@ -25,6 +19,5 @@ if sys.version_info[0] < 2:
     raise ImportError("Python version 3 for ReactionSystem.")
 del sys
 
-from .var import var
 from .reaction_system import *
 from .exceptions import *

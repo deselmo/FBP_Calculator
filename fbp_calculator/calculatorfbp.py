@@ -2,14 +2,15 @@
 
 import multiprocessing
 from PyQt5 import QtCore
-from pyeda.inter import Not
-from pyeda.boolalg.expr import \
-    Constant, \
-    Literal, \
-    Complement, \
-    NotOp, \
-    AndOp, \
-    OrOp
+from fbp_calculator.reactionsystem.boolean_wrap import (
+    Not,
+    Constant,
+    Literal,
+    Complement,
+    NotOp,
+    AndOp,
+    OrOp)
+
 from fbp_calculator.reaction_adapter import reaction_invadapter
 from fbp_calculator.increase_recursion_limit import increase_recursion_limit
 

@@ -7,18 +7,6 @@ if not (sys.version_info[0] == 3 and sys.version_info[1] >= 3):
     raise ImportError("Python version 3.3 or above is required.")
 del sys
 
-# try:
-#     import boolexpr
-# except ImportError:
-#     raise ImportError("ReactionSystem depends on boolexpr as an external library. ")
-# del boolexpr
-
-try:
-    import pyeda
-except ImportError:
-    raise ImportError("ReactionSystem depends on pyeda as an external library. ")
-del pyeda
-
 try:
     import PyQt5
 except ImportError:
