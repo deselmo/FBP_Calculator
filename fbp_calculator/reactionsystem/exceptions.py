@@ -6,3 +6,4 @@ class ExceptionReactionSystem():
     class InvalidReactionSet(Exception): pass
     class InvalidNumber(Exception): pass
     class InvalidFormula(Exception): pass
+    class InvalidContextSet(Exception): pass

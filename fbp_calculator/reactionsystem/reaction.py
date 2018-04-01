@@ -1,9 +1,10 @@
 from .var import var
 
-from boolexpr import \
-    not_ as Not, \
-    and_s as And, \
-    ONE
+from pyeda.boolalg.expr import \
+    Not, \
+    And, \
+    expr
+ONE = expr(True)
 
 from .exceptions import ExceptionReactionSystem
 import re

@@ -3,11 +3,16 @@ ReactionSystem is a Python library for manage for manage Reaction System.
 It depends on boolexpr and pyeda.
 """
 
-try:
-    import boolexpr
-except ImportError:
-    raise ImportError("ReactionSystem depends on boolexpr as an external library. ")
-del boolexpr
+import sys
+if not (sys.version_info[0] == 3 and sys.version_info[1] >= 3):
+    raise ImportError("Python version 3.3 or above is required.")
+del sys
+
+# try:
+#     import boolexpr
+# except ImportError:
+#     raise ImportError("ReactionSystem depends on boolexpr as an external library. ")
+# del boolexpr
 
 try:
     import pyeda

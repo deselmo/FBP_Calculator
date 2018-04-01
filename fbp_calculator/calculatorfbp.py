@@ -11,6 +11,7 @@ from pyeda.boolalg.expr import \
     AndOp, \
     OrOp
 from fbp_calculator.reaction_adapter import reaction_invadapter
+from fbp_calculator.increase_recursion_limit import increase_recursion_limit
 
 class QThreadCalculatorFBP(QtCore.QThread):
     stopped = False
@@ -47,7 +48,7 @@ class ProcessCalculateFBP(multiprocessing.Process):
         self.context_given_set = context_given_set
         self.context_not_given_set = context_not_given_set
         self.result = result
-
+        
         super(ProcessCalculateFBP, self).__init__()
 
     def run(self):

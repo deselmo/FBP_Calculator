@@ -1,4 +1,5 @@
-from boolexpr import Context
+# from boolexpr import Context
+from pyeda.inter import exprvar
 
-ctx = Context()
-def var(name): return ctx.get_var(name)
+# ctx = Context()
+def var(name): return exprvar(name)

@@ -4,26 +4,26 @@ from pyeda.boolalg.expr import Atom
 
 from .var import var
 
-from boolexpr import \
-    not_ as Not, \
-    and_s as And, \
-    or_s as Or, \
-    ZERO, \
-    ONE
-
-from boolexpr.wrap import \
+from pyeda.boolalg.expr import \
+    Not, \
+    And, \
+    Or, \
+    expr, \
     Constant, \
     Literal, \
     Variable, \
     Complement, \
-    NegativeOperator as NotOp, \
-    And as AndOp, \
-    Or as OrOp
+    NotOp, \
+    AndOp, \
+    OrOp
+ZERO = expr(False)
+ONE = expr(True)
 
 from .reaction import Reaction
 from .reaction_set import ReactionSet
 from .exceptions import ExceptionReactionSystem
 
+from .to_dnf import to_dnf
 
 
 class ReactionSystem():
@@ -43,24 +43,29 @@ class ReactionSystem():
         return self.A.cause(symbol)
 
     def fbp(self, symbols, steps, context_given_set=set(), context_not_given_set=set()):
-        # import time
-        # print(time.time())
-
+        symbolSet = Reaction._create_symbol_set(symbols)
+        if not isinstance(steps, int) or steps < 0:
+            raise ExceptionReactionSystem.InvalidNumber()
+        if not isinstance(context_given_set, set) or not isinstance(context_not_given_set, set):
+            raise ExceptionReactionSystem.InvalidContextSet()
         self._context_given_set = context_given_set
         self._context_not_given_set = context_not_given_set
         
-        symbolSet = Reaction._create_symbol_set(symbols)
-        formula = True
+        import time
+        print(time.time())
+
+        formula = ONE
         for symbol in symbolSet:
-            Reaction._check_symbol(symbol)
-            if not isinstance(steps, int) or steps < 0: raise ExceptionReactionSystem.InvalidNumber()
             formula = And(formula, self._fbs(self.cause(symbol), steps))
 
-        formula = expr(str(formula.to_dnf()))        
-        if  not isinstance(formula, Atom) and formula.is_dnf():
+        formula = to_dnf(formula)
+        # formula = formula.to_dnf()
+        assert(formula.is_dnf())
+
+        if not isinstance(formula, Atom) and formula.is_dnf():
             formula = espresso_exprs(formula)[0]
 
-        # print(time.time())
+        print(time.time())
 
         return formula
 
@@ -85,12 +90,12 @@ class ReactionSystem():
 
         elif isinstance(formula, AndOp):
             formula_result = ONE
-            for formula_x in formula.args:
+            for formula_x in formula.xs:
                 formula_result = And(formula_result, self._fbs(formula_x, i))
 
         elif isinstance(formula, OrOp):
             formula_result = ZERO
-            for formula_x in formula.args:
+            for formula_x in formula.xs:
                 formula_result = Or(formula_result, self._fbs(formula_x, i))
 
         return formula_result
