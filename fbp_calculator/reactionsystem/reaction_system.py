@@ -48,7 +48,6 @@ class ReactionSystem():
         self._context_not_given_set = context_not_given_set
         
         import time
-        start = time.time()
 
         formula = ONE
         for symbol in symbolSet:
