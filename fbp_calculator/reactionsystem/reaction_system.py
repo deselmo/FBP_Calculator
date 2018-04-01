@@ -21,8 +21,6 @@ from .reaction import Reaction
 from .reaction_set import ReactionSet
 from .exceptions import ExceptionReactionSystem
 
-from .to_dnf import to_dnf
-
 
 class ReactionSystem():
     def __init__(self, A):
@@ -50,25 +48,20 @@ class ReactionSystem():
         self._context_not_given_set = context_not_given_set
         
         import time
-        print(time.time())
+        start = time.time()
 
         formula = ONE
         for symbol in symbolSet:
             formula = And(formula, self._fbs(self.cause(symbol), steps))
 
-        formula = to_dnf(formula)
-        # formula = formula.to_dnf()
         assert(formula.is_dnf())
-
         if not isinstance(formula, Atom) and formula.is_dnf():
             formula = espresso_exprs(formula)[0]
-
-        print(time.time())
 
         return formula
 
 
-    def _fbs(self, formula, i):
+    def _fbs(self, formula, i, inv_nf=False):
         if isinstance(formula, Constant):
             formula_result = formula
 
@@ -81,23 +74,27 @@ class ReactionSystem():
             else:
                 formula_result = var('{}_{}'.format(symbol, i))
             if i > 0:
-                formula_result = Or(formula_result, self._fbs(self.cause(symbol), i-1))
+                formula_result = Or(formula_result, self._fbs(self.cause(symbol), i-1, inv_nf))
 
         elif isinstance(formula, Complement) or isinstance(formula, NotOp):
-            formula_result = Not(self._fbs(Not(formula), i))
+            formula_result = Not(self._fbs(Not(formula), i, not inv_nf))
 
         elif isinstance(formula, AndOp):
             formula_result = ONE
             for formula_x in formula.xs:
-                formula_result = And(formula_result, self._fbs(formula_x, i))
+                formula_result = And(formula_result, self._fbs(formula_x, i, inv_nf))
 
         elif isinstance(formula, OrOp):
             formula_result = ZERO
             for formula_x in formula.xs:
-                formula_result = Or(formula_result, self._fbs(formula_x, i))
+                formula_result = Or(formula_result, self._fbs(formula_x, i, inv_nf))
+
+        if inv_nf:
+            formula_result = formula_result.to_cnf()
+        else:
+            formula_result = formula_result.to_dnf()
 
         return formula_result
-
 
 
     def __eq__(self, other):
