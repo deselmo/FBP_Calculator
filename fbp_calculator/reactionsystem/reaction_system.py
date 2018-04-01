@@ -47,8 +47,6 @@ class ReactionSystem():
         self._context_given_set = context_given_set
         self._context_not_given_set = context_not_given_set
         
-        import time
-
         formula = ONE
         for symbol in symbolSet:
             formula = And(formula, self._fbs(self.cause(symbol), steps))
