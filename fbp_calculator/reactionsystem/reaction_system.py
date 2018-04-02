@@ -45,6 +45,9 @@ class ReactionSystem():
             raise ExceptionReactionSystem.InvalidContextSet()
         self._context_given = context_given
         self._context_not_given = context_not_given
+        
+        import time
+        start = time.time()
 
         formula = ONE
         for symbol in symbolSet:
@@ -54,6 +57,8 @@ class ReactionSystem():
 
         if not isinstance(formula, Atom) and formula.is_dnf():
             formula = espresso_exprs(formula)[0]
+
+        print(time.time() - start)
 
         return formula
 
