@@ -22,6 +22,10 @@ from .reaction import Reaction
 from .reaction_set import ReactionSet
 from .exceptions import ExceptionReactionSystem
 
+import sys
+if 'time' in sys.argv:
+    import time
+
 
 class ReactionSystem():
     def __init__(self, A):
@@ -49,8 +53,8 @@ class ReactionSystem():
         self.cg = context_given
         self.cng = context_not_given
 
-        import time
-        start = time.time()
+        if 'time' in sys.argv:
+            start = time.time()
 
         formula = ONE
         for symbol in symbolSet:
@@ -61,7 +65,8 @@ class ReactionSystem():
         if not isinstance(formula, Atom) and formula.is_dnf():
             formula = espresso_exprs(formula)[0]
 
-        print(time.time() - start)
+        if 'time' in sys.argv:
+            print(time.time() - start)
 
         return formula
 
