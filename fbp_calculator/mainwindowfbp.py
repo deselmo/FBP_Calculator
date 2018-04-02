@@ -106,7 +106,7 @@ class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
             QtWidgets.QFileDialog.getOpenFileName(self, 
                 'Open a Reaction System file', 
                 '',
-                'TXT files (*.txt)')
+                'TXT files (*.txt);;All files (*)')
         if not self.temp_file_name:
             return
 
