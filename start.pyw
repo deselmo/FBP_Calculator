@@ -2,4 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from fbp_calculator import main
-main()
+
+if __name__ == '__main__':
+    main()

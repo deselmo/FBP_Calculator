@@ -12,9 +12,11 @@ from .boolean_wrap import (
     Complement,
     AndOp,
     OrOp,
+    OrAndOp,
     ZERO,
     ONE,
-    var)
+    var,
+    parse)
 
 from .reaction import Reaction
 from .reaction_set import ReactionSet
@@ -33,28 +35,29 @@ class ReactionSystem():
         if not isinstance(A, ReactionSet): raise ExceptionReactionSystem.InvalidReactionSet()
         self._A = A
 
-
     def cause(self, symbol):
         return self.A.cause(symbol)
 
     def fbp(self, symbols, steps, context_given=set(), context_not_given=set()):
         symbolSet = Reaction._create_symbol_set(symbols)
         if not isinstance(steps, int) or steps < 0:
-            raise ExceptionReactionSystem.InvalidNumber()
-        if not isinstance(context_given, set) or not isinstance(context_not_given, set):
-            raise ExceptionReactionSystem.InvalidContextSet()
-        self._context_given = context_given
-        self._context_not_given = context_not_given
+                raise ExceptionReactionSystem.InvalidNumber()
+        if (not isinstance(context_given, set) or 
+            not isinstance(context_not_given, set)):
+                raise ExceptionReactionSystem.InvalidContextSet()
         
+        self.cg = context_given
+        self.cng = context_not_given
+
         import time
         start = time.time()
 
         formula = ONE
         for symbol in symbolSet:
             formula = And(formula, symbol)
-
+        
         formula = self._fbs(self.cause(symbol), steps)
-
+        
         if not isinstance(formula, Atom) and formula.is_dnf():
             formula = espresso_exprs(formula)[0]
 
@@ -62,16 +65,16 @@ class ReactionSystem():
 
         return formula
 
-
+    
     def _fbs(self, formula, i, inv_nf=False):
         if isinstance(formula, Constant):
             pass
 
         elif isinstance(formula, Variable):
             symbol = formula.name
-            if (i,symbol) in self._context_given:
+            if (i,symbol) in self.cg:
                 formula = ONE
-            elif (i,symbol) in self._context_not_given:
+            elif (i,symbol) in self.cng:
                 formula = ZERO
             else:
                 formula = var('{}_{}'.format(symbol, i))
@@ -82,24 +85,16 @@ class ReactionSystem():
         elif isinstance(formula, Complement):
             formula = Not(self._fbs(Not(formula), i, not inv_nf))
 
-        elif isinstance(formula, AndOp):
-            formula = And(
+        elif isinstance(formula, OrAndOp):
+            Op = And if isinstance(formula, AndOp) else Or
+            formula = Op(
                 self._fbs(formula.xs[0], i, inv_nf),
-                self._fbs(And(*formula.xs[1:]), i ,inv_nf))
-
-        elif isinstance(formula, OrOp):
-            formula = Or(
-                self._fbs(formula.xs[0], i, inv_nf),
-                self._fbs(Or(*formula.xs[1:]), i ,inv_nf))
+                self._fbs(Op(*formula.xs[1:]), i, inv_nf))
 
         else:
             assert()
-        
 
-        if inv_nf:
-            formula = formula.to_cnf()
-        else:
-            formula = formula.to_dnf()
+        formula = formula.to_cnf() if inv_nf else formula.to_dnf()
 
         return formula
 

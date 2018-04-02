@@ -2,7 +2,7 @@ from pyeda.boolalg.expr import (
     Not,
     And,
     Or,
-    expr,
+    expr as parse,
     exprvar as var,
     Constant,
     Literal,
@@ -10,7 +10,8 @@ from pyeda.boolalg.expr import (
     Complement,
     NotOp,
     AndOp,
-    OrOp)
+    OrOp,
+    OrAndOp)
 
-ZERO = expr(False)
-ONE = expr(True)
+ZERO = parse(False)
+ONE = parse(True)
