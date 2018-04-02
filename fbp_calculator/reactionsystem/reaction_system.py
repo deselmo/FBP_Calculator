@@ -10,7 +10,6 @@ from .boolean_wrap import (
     Literal,
     Variable,
     Complement,
-    NotOp,
     AndOp,
     OrOp,
     ZERO,
@@ -38,20 +37,21 @@ class ReactionSystem():
     def cause(self, symbol):
         return self.A.cause(symbol)
 
-    def fbp(self, symbols, steps, context_given_set=set(), context_not_given_set=set()):
+    def fbp(self, symbols, steps, context_given=set(), context_not_given=set()):
         symbolSet = Reaction._create_symbol_set(symbols)
         if not isinstance(steps, int) or steps < 0:
             raise ExceptionReactionSystem.InvalidNumber()
-        if not isinstance(context_given_set, set) or not isinstance(context_not_given_set, set):
+        if not isinstance(context_given, set) or not isinstance(context_not_given, set):
             raise ExceptionReactionSystem.InvalidContextSet()
-        self._context_given_set = context_given_set
-        self._context_not_given_set = context_not_given_set
-        
+        self._context_given = context_given
+        self._context_not_given = context_not_given
+
         formula = ONE
         for symbol in symbolSet:
-            formula = And(formula, self._fbs(self.cause(symbol), steps))
+            formula = And(formula, symbol)
 
-        assert(formula.is_dnf())
+        formula = self._fbs(self.cause(symbol), steps)
+
         if not isinstance(formula, Atom) and formula.is_dnf():
             formula = espresso_exprs(formula)[0]
 
@@ -60,38 +60,43 @@ class ReactionSystem():
 
     def _fbs(self, formula, i, inv_nf=False):
         if isinstance(formula, Constant):
-            formula_result = formula
+            pass
 
         elif isinstance(formula, Variable):
-            symbol = str(formula)
-            if (i,symbol) in self._context_given_set:
-                formula_result = ONE
-            elif (i,symbol) in self._context_not_given_set:
-                formula_result = ZERO
+            symbol = formula.name
+            if (i,symbol) in self._context_given:
+                formula = ONE
+            elif (i,symbol) in self._context_not_given:
+                formula = ZERO
             else:
-                formula_result = var('{}_{}'.format(symbol, i))
+                formula = var('{}_{}'.format(symbol, i))
+            
             if i > 0:
-                formula_result = Or(formula_result, self._fbs(self.cause(symbol), i-1, inv_nf))
+                formula = Or(formula, self._fbs(self.cause(symbol), i-1, inv_nf))
 
-        elif isinstance(formula, Complement) or isinstance(formula, NotOp):
-            formula_result = Not(self._fbs(Not(formula), i, not inv_nf))
+        elif isinstance(formula, Complement):
+            formula = Not(self._fbs(Not(formula), i, not inv_nf))
 
         elif isinstance(formula, AndOp):
-            formula_result = ONE
-            for formula_x in formula.xs:
-                formula_result = And(formula_result, self._fbs(formula_x, i, inv_nf))
+            formula = And(
+                self._fbs(formula.xs[0], i, inv_nf),
+                self._fbs(And(*formula.xs[1:]), i ,inv_nf))
 
         elif isinstance(formula, OrOp):
-            formula_result = ZERO
-            for formula_x in formula.xs:
-                formula_result = Or(formula_result, self._fbs(formula_x, i, inv_nf))
+            formula = Or(
+                self._fbs(formula.xs[0], i, inv_nf),
+                self._fbs(Or(*formula.xs[1:]), i ,inv_nf))
+
+        else:
+            assert()
+        
 
         if inv_nf:
-            formula_result = formula_result.to_cnf()
+            formula = formula.to_cnf()
         else:
-            formula_result = formula_result.to_dnf()
+            formula = formula.to_dnf()
 
-        return formula_result
+        return formula
 
 
     def __eq__(self, other):
