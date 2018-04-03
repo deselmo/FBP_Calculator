@@ -58,9 +58,10 @@ class ReactionSystem():
 
         formula = ONE
         for symbol in symbolSet:
-            formula = And(formula, symbol)
+            formula = And(formula, self.cause(symbol))
+            formula = formula.to_dnf()
         
-        formula = self._fbs(self.cause(symbol), steps)
+        formula = self._fbs(formula, steps)
         
         if not isinstance(formula, Atom) and formula.is_dnf():
             formula = espresso_exprs(formula)[0]
