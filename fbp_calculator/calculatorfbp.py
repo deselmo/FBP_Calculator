@@ -19,6 +19,10 @@ class QThreadCalculatorFBP(QtCore.QThread):
 
     def __init__(self, dialog):
         self.result = multiprocessing.Manager().dict()
+        self.result['completed'] = False
+        self.result['formula'] = None
+        self.result['formula_table'] = None
+
         self._process = ProcessCalculateFBP(
             dialog.steps,
             dialog.symbols,
@@ -58,6 +62,7 @@ class ProcessCalculateFBP(multiprocessing.Process):
             self.context_given_set, self.context_not_given_set)
 
         if isinstance(formula, Constant):
+            self.result['completed'] = True
             self.result['formula'] = formula.VALUE
             self.result['formula_table'] = formula.VALUE
             return
@@ -86,6 +91,8 @@ class ProcessCalculateFBP(multiprocessing.Process):
                    formula_dict_and[n] = s
             formula_table_or.append(formula_dict_and)
 
+
+        self.result['completed'] = True
         self.result['formula'] = formula_list_or
         self.result['formula_table'] = formula_table_or
 

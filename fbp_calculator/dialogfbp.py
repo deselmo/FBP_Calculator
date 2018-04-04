@@ -148,14 +148,14 @@ class DialogFBP(QtWidgets.QDialog, Ui_DialogFBP):
         self.labelLoadingImage.movie().stop()
         self.labelComputing.setVisible(False)
 
-        try:
-            self.formula = self.QThreadCalculatorFBP.result['formula']
-            self.formula_table = self.QThreadCalculatorFBP.result['formula_table']
-        except Exception:
+        if not self.QThreadCalculatorFBP.result['completed']:
             self.labelComputing.setStyleSheet("QLabel { color : red; font-weight:600; }")
             self.labelComputing.setText('Error during the fbp calculation')
             self.labelComputing.setVisible(True)
             return
+        
+        self.formula = self.QThreadCalculatorFBP.result['formula']
+        self.formula_table = self.QThreadCalculatorFBP.result['formula_table']
 
         self.toolButtonSave.setVisible(True)
 
