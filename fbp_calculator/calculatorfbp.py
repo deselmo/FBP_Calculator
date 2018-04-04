@@ -2,7 +2,7 @@
 
 import multiprocessing
 from PyQt5 import QtCore
-from fbp_calculator.reactionsystem.boolean_wrap import (
+from .reactionsystem.boolean_wrap import (
     Not,
     Constant,
     Literal,
@@ -11,8 +11,8 @@ from fbp_calculator.reactionsystem.boolean_wrap import (
     AndOp,
     OrOp)
 
-from fbp_calculator.reaction_adapter import reaction_invadapter
-from fbp_calculator.increase_recursion_limit import increase_recursion_limit
+from .reaction_adapter import reaction_invadapter
+from .increase_recursion_limit import increase_recursion_limit
 
 class QThreadCalculatorFBP(QtCore.QThread):
     stopped = False

@@ -3,9 +3,9 @@
 import re
 import xlsxwriter
 from PyQt5 import QtCore, QtGui, QtWidgets
-from fbp_calculator.ui_dialogfbp import Ui_DialogFBP
-from fbp_calculator.calculatorfbp import QThreadCalculatorFBP
-from fbp_calculator.reaction_adapter import reaction_invadapter
+from .ui_dialogfbp import Ui_DialogFBP
+from .calculatorfbp import QThreadCalculatorFBP
+from .reaction_adapter import reaction_invadapter
 
 class DialogFBP(QtWidgets.QDialog, Ui_DialogFBP):
     def __init__(self, parent,

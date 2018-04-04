@@ -128,6 +128,7 @@ class Ui_DialogFBP(object):
         self.labelComputing.setText(_translate("DialogFBP", "Computing"))
         self.labelSymbols.setText(_translate("DialogFBP", "Symbols:"))
 
+from . import resources_rc
 
 if __name__ == "__main__":
     import sys

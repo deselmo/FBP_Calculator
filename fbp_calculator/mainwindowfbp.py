@@ -3,14 +3,14 @@
 import re
 from copy import deepcopy
 from PyQt5 import QtCore, QtGui, QtWidgets
-from fbp_calculator.reactionsystem import (
+from .reactionsystem import (
     Reaction,
     ReactionSet,
     ReactionSystem,
     ExceptionReactionSystem)
-from fbp_calculator.ui_mainwindowfbp import Ui_MainWindowFBP
-from fbp_calculator.dialogfbp import DialogFBP
-from fbp_calculator.reaction_adapter import reaction_adapter, reaction_invadapter
+from .ui_mainwindowfbp import Ui_MainWindowFBP
+from .dialogfbp import DialogFBP
+from .reaction_adapter import reaction_adapter, reaction_invadapter
 
 
 class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):

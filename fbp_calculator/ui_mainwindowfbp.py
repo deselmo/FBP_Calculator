@@ -316,7 +316,7 @@ class Ui_MainWindowFBP(object):
         self.actionNew.setShortcut(_translate("MainWindowFBP", "Ctrl+N"))
         self.actionAbout.setText(_translate("MainWindowFBP", "About"))
 
-import fbp_calculator.resources_rc
+from . import resources_rc
 
 if __name__ == "__main__":
     import sys
