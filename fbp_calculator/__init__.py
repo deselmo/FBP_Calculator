@@ -4,7 +4,9 @@
 FBP Calculator is a Python tool to calculate predicor for Reaction System.
 """
 
-__version__ = "1.0.0"
+from .version import get_version
+__version__ = get_version()
+del get_version
 
 import sys
 if not (sys.version_info[0] == 3 and sys.version_info[1] >= 3):
