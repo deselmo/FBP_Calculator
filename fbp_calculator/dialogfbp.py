@@ -153,7 +153,8 @@ class DialogFBP(QtWidgets.QDialog, Ui_DialogFBP):
             self.formula_table = self.QThreadCalculatorFBP.result['formula_table']
         except Exception:
             self.labelComputing.setStyleSheet("QLabel { color : red; font-weight:600; }")
-            self.labelComputing.setText('Error in fbp calculation')
+            self.labelComputing.setText('Error during the fbp calculation')
+            self.labelComputing.setVisible(True)
             return
 
         self.toolButtonSave.setVisible(True)
