@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 """
-ReactionSystem is a Python library for manage for manage Reaction System. 
-It depends on boolexpr and pyeda.
+ReactionSystem is a Python library for Reaction System managing.
 """
+
+__version__ = "1.0.0"
 
 import sys
 if not (sys.version_info[0] == 3 and sys.version_info[1] >= 3):
