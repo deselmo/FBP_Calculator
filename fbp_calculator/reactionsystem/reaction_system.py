@@ -81,7 +81,7 @@ class ReactionSystem():
         elif isinstance(formula, Variable):
             symbol = formula.name
             if (i,symbol) in self.cg:
-                formula = ONE
+                return True
             elif (i,symbol) in self.cng:
                 formula = ZERO
             else:
