@@ -26,4 +26,4 @@ if sys.version_info[0] < 2:
     raise ImportError("Python version 3 for ReactionSystem.")
 del sys
 
-from fbp_calculator.__main__ import main
+from fbp_calculator.__main__ import main as start_fbp_calculator
