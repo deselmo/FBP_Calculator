@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from pyeda.inter import expr
 from pyeda.inter import espresso_exprs
 from pyeda.boolalg.expr import Atom 

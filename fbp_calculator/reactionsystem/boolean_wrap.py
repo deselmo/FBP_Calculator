@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from pyeda.boolalg.expr import (
     Not,
     And,

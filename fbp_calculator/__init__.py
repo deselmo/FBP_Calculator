@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 FBP Calculator is a Python tool to calculate predicor for Reaction System.
 """

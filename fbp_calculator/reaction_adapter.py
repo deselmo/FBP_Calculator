@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 def reaction_adapter(text):
     return text.replace(',', '__')
 

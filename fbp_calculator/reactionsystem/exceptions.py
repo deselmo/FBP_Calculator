@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 class ExceptionReactionSystem():
     class InvalidSyntax(Exception): pass
     class ReactantSetCannotBeEmpty(Exception): pass

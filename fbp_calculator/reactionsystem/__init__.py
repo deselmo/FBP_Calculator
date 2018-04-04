@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 ReactionSystem is a Python library for manage for manage Reaction System. 
 It depends on boolexpr and pyeda.
