@@ -22,59 +22,74 @@ $ python3 setup.py install
 > You will probably need to install the python3 "development" package.
 >
 > - For Debian-based systems (eg Ubuntu, Mint):
->
->   `$ sudo apt-get install python3-dev`
+>   ```
+>   $ sudo apt-get install python3-dev
+>   ```
 >
 > - For RedHat-based systems (eg RHEL, Centos):
 >
->   `$ sudo yum install python3-devel`
+>   ```
+>   $ sudo yum install python3-devel
+>   ```
 >
 > - For ArchLinux-based systems:
 >
->   `$ pacman -S base-devel`
+>   ```
+>   $ pacman -S base-devel
+>   ```
 >
 > #### Windows
 > Download the pyeda binary file for your system from Christoph Gohlke's [pythonlibs page](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyeda) and install it.
 >
-> `> pip3 install pyeda‑*.whl`
+> ```
+> > pip3 install pyeda‑*.whl
+> ```
 >
 > ### MacOs
 > 1. Install Xcode’s separate Command Line Tools app
 >
->       `$ xcode-select --install`
+>       ```
+>       $ xcode-select --install
+>       ```
 >
 > 2. Installing and setting up Homebrew
 >
->       `$ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+>       ```
+>       $ /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+>       ```
+>
 > 3. Put the Homebrew directory at the top of the PATH environment variable.
 >
 >       You should create or open the `~/.bash_profile` file. Using the nano command:
 >
+>       ```
 >       `$ nano ~/.bash_profile`
+>       ```
 >
 >       Write the following:
 >
->       `export PATH=/usr/local/bin:$PATH`
+>       ```
+>       export PATH=/usr/local/bin:$PATH`
+>       ```
 >
 >       For these changes to activate, in the Terminal window, type:
 >
+>       ```
 >       `$ source ~/.bash_profile`
+>       ```
 >
 > 4. Install python3:
 >
->       `$ brew install python3`
->
+>       ```
+>       $ brew install python3
+>       ```
 
-
-
-
-
-
-
-After pip installing run the below:
+## Usage
+After pip installing you can run the application from command line:
 ```
 $ fbp_calculator
 ```
+or you using the `fbp_calculator.pyw` file  in the repository.
 
 ## License
 This project is licensed under the [MIT License](https://github.com/deselmo/FBP-Calculator/blob/master/LICENSE).

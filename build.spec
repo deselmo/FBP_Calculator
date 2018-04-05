@@ -7,7 +7,7 @@ import resource
 resource.setrlimit(resource.RLIMIT_STACK, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
 sys.setrecursionlimit(2**31-1)
 
-a = Analysis(['run.pyw'],
+a = Analysis(['fbp_calculator.pyw'],
              pathex=[],
              binaries=[],
              datas=[],
