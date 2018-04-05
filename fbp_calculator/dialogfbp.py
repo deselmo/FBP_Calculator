@@ -269,7 +269,7 @@ class DialogFBP(QtWidgets.QDialog, Ui_DialogFBP):
         label = QtWidgets.QLabel(text)
         label.setContentsMargins(4,4,4,4)
         item = QtWidgets.QListWidgetItem()
-        item.setSizeHint(label.sizeHint())
+        item.setSizeHint(QtCore.QSize(0, label.sizeHint().height()+4))
         self.listFormula.addItem(item)
         self.listFormula.setItemWidget(item, label)
 

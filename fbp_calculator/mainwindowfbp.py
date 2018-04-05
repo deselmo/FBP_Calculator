@@ -372,6 +372,11 @@ class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
         self.tableWidgetProperties_fillSpace()
         
+        height = self.tableWidgetProperties.horizontalHeader().size().height()
+        height += self.tableWidgetProperties.verticalHeader().size.height()*2
+        height += self.tableWidgetProperties.horizontalScrollBar.size().height()
+        size = self.tableWidgetProperties.size()
+        self.tableWidgetProperties.setFixedSize(size.width(), height)
         self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
     def tableWidgetProperties_fillSpace(self):
