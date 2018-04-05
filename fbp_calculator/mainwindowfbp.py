@@ -63,8 +63,13 @@ class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.actionAbout.triggered.connect(self.actionAbout_triggered)
 
         self.tableWidgetProperties.horizontalScrollBar().valueChanged.connect(self.tableWidgetProperties_scrollBar_valueChanged)
-
         self.tableWidgetProperties_addColumn()
+
+        height = self.tableWidgetProperties.horizontalHeader().size().height()
+        height += self.tableWidgetProperties.verticalHeader().size().height()
+        height += self.tableWidgetProperties.horizontalScrollBar().size().height()
+        size = self.tableWidgetProperties.size()
+        self.tableWidgetProperties.setMinimumSize(0, height)
 
         self.setGeometry(
             QtWidgets.QStyle.alignedRect(
@@ -372,11 +377,6 @@ class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
         self.tableWidgetProperties_fillSpace()
         
-        height = self.tableWidgetProperties.horizontalHeader().size().height()
-        height += self.tableWidgetProperties.verticalHeader().size.height()*2
-        height += self.tableWidgetProperties.horizontalScrollBar.size().height()
-        size = self.tableWidgetProperties.size()
-        self.tableWidgetProperties.setFixedSize(size.width(), height)
         self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
     def tableWidgetProperties_fillSpace(self):
