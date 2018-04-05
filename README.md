@@ -1,20 +1,26 @@
 # FBP Calculator
 FBP Calculator is a graphical tool for calculating Reaction System predictors.
 
-## Download
-```
-git clone git://github.com/deselmo/fbp_calculator.git
-```
-
 ## Installation
-Using pip:
+#### Using pip:
 ```
 $ pip3 install fbp_calculator
 ```
-Installation from the repository:
+#### From the repository:
+
+Download the repository:
+```
+$ git clone git://github.com/deselmo/fbp_calculator.git
+```
+move into the repository direcory:
+```
+cd fbp_calculator:
+```
+install the application:
 ```
 $ python3 setup.py install
 ```
+
 > ### Note
 > fbp_calculator depends on pyeda, in order to install it you will need to have python headers and libraries.
 >
@@ -45,7 +51,7 @@ $ python3 setup.py install
 > > pip3 install pyeda‑*.whl
 > ```
 >
-> ### MacOs
+> #### MacOs
 > 1. Install Xcode’s separate Command Line Tools app
 >
 >       ```
@@ -89,7 +95,7 @@ After pip installing you can run the application from command line:
 ```
 $ fbp_calculator
 ```
-or you using the `fbp_calculator.pyw` file  in the repository.
+or using the `fbp_calculator.pyw` file  in the repository.
 
 ## License
 This project is licensed under the [MIT License](https://github.com/deselmo/FBP-Calculator/blob/master/LICENSE).
