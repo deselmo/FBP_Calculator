@@ -11,6 +11,8 @@ from .reactionsystem.boolean_wrap import (
     AndOp,
     OrOp)
 
+from .reactionsystem import ReactionSystem, ReactionSet, Reaction
+
 from .reaction_adapter import reaction_invadapter
 from .increase_recursion_limit import increase_recursion_limit
 
@@ -26,7 +28,7 @@ class QThreadCalculatorFBP(QtCore.QThread):
         self._process = ProcessCalculateFBP(
             dialog.steps,
             dialog.symbols,
-            dialog.rs,
+            dialog.reaction_set,
             dialog.context_given_set,
             dialog.context_not_given_set,
             self.result)
@@ -46,10 +48,10 @@ class QThreadCalculatorFBP(QtCore.QThread):
 
 
 class ProcessCalculateFBP(multiprocessing.Process):
-    def __init__(self, steps, symbols, rs, context_given_set, context_not_given_set, result):
+    def __init__(self, steps, symbols, reaction_set, context_given_set, context_not_given_set, result):
         self.steps = steps
         self.symbols = symbols
-        self.rs = rs
+        self.reaction_set = reaction_set
         self.context_given_set = context_given_set
         self.context_not_given_set = context_not_given_set
         self.result = result
@@ -57,6 +59,8 @@ class ProcessCalculateFBP(multiprocessing.Process):
         super(ProcessCalculateFBP, self).__init__()
 
     def run(self):
+        self.rs = ReactionSystem(self.reaction_set)
+
         formula = self.rs.fbp(
             self.symbols, self.steps-1,
             self.context_given_set, self.context_not_given_set)

@@ -17,8 +17,7 @@ from .boolean_wrap import (
     OrAndOp,
     ZERO,
     ONE,
-    var,
-    parse)
+    var)
 
 from .reaction import Reaction
 from .reaction_set import ReactionSet

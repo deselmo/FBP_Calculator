@@ -9,7 +9,7 @@ from .reaction_adapter import reaction_invadapter
 
 class DialogFBP(QtWidgets.QDialog, Ui_DialogFBP):
     def __init__(self, parent,
-            symbols, steps, rs, context_given_set, context_not_given_set):
+            symbols, steps, reaction_set, context_given_set, context_not_given_set):
         super(DialogFBP, self).__init__(parent)
         self.setupUi(self)
 
@@ -23,7 +23,7 @@ class DialogFBP(QtWidgets.QDialog, Ui_DialogFBP):
 
         self.symbols = symbols
         self.steps = steps
-        self.rs = rs
+        self.reaction_set = reaction_set
         self.context_given_set = context_given_set
         self.context_not_given_set = context_not_given_set
 

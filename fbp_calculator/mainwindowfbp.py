@@ -6,7 +6,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from .reactionsystem import (
     Reaction,
     ReactionSet,
-    ReactionSystem,
     ExceptionReactionSystem)
 from .ui_mainwindowfbp import Ui_MainWindowFBP
 from .dialogfbp import DialogFBP
@@ -287,7 +286,7 @@ class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         DialogFBP(self,
             deepcopy(reaction_adapter(self.lineEditCalculatorSymbols.text())),
             deepcopy(self.spinBoxCalculatorSteps.value()),
-            ReactionSystem(ReactionSet(deepcopy(self.reaction_list))),
+            ReactionSet(deepcopy(self.reaction_list)),
             deepcopy(self.context_given_set[0]),
             deepcopy(self.context_given_set[1])
         ).show()
