@@ -65,7 +65,8 @@ class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         self.tableWidgetProperties_addColumn()
 
         height = self.tableWidgetProperties.horizontalHeader().size().height()
-        height += self.tableWidgetProperties.verticalHeader().size().height()
+        height += self.tableWidgetProperties.rowHeight(0)
+        height += self.tableWidgetProperties.rowHeight(1)
         height += self.tableWidgetProperties.horizontalScrollBar().size().height()
         self.tableWidgetProperties.setFixedHeight(height+2)
 
