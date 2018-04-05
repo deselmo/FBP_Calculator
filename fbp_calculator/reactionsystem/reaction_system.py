@@ -32,13 +32,13 @@ class ReactionSystem():
     def __init__(self, A):
         reactant_set = set()
         for reaction in A:
-            reactant_set = reactant_set.union(reaction.R)
+            reactant_set = reactant_set.union(reaction.P)
         self._causes = {}
         for reactant in reactant_set:
             self._causes[reactant] = A.cause(reactant)
 
     def cause(self, symbol):
-        return self._causes.get(symbol, False)
+        return self._causes.get(symbol, ZERO)
 
     def fbp(self, symbols, steps, context_given=set(), context_not_given=set()):
         symbolSet = Reaction._create_symbol_set(symbols)
@@ -96,6 +96,7 @@ class ReactionSystem():
                 self._fbs(Op(*formula.xs[1:]), i, inv_nf))
 
         else:
+            print(formula)
             assert()
 
         formula = formula.to_cnf() if inv_nf else formula.to_dnf()
