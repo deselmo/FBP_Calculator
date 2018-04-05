@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 with open(path.join(here, 'LICENSE'), encoding='utf-8') as f:
-    long_description = f.read()
+    license = f.read()
 
 with open(path.join(here, name, 'release.py'), encoding='utf-8') as f:
     # Defines __version__
@@ -41,4 +41,5 @@ setup(
         'Bug Reports': '{}/issues'.format(github),
         'Source': '{}/'.format(github),
     },
+    license=license
 )
