@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .boolean_wrap import (
-    Or,
-    ZERO)
+from .boolean_wrap import (Or, ZERO)
     
 from .reaction import Reaction
 from .exceptions import ExceptionReactionSystem

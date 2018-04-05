@@ -31,18 +31,15 @@ if 'time' in sys.argv:
 
 class ReactionSystem():
     def __init__(self, A):
-        self.A = A
-
-    @property
-    def A(self): return self._A
-
-    @A.setter
-    def A(self, A):
-        if not isinstance(A, ReactionSet): raise ExceptionReactionSystem.InvalidReactionSet()
-        self._A = A
+        reactant_set = set()
+        for reaction in A:
+            reactant_set = reactant_set.union(reaction.R)
+        self._causes = {}
+        for reactant in reactant_set:
+            self._causes[reactant] = A.cause(reactant)
 
     def cause(self, symbol):
-        return self.A.cause(symbol)
+        return self._causes.get(symbol, False)
 
     def fbp(self, symbols, steps, context_given=set(), context_not_given=set()):
         symbolSet = Reaction._create_symbol_set(symbols)
@@ -110,16 +107,16 @@ class ReactionSystem():
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        return self.A == other.A
+        return self._causes == other._causes
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return hash(self.A)
+        return hash(self._causes)
 
     def __str__(self):
-        return 'ReactionSystem({})'.format(str(self.A))
+        return 'ReactionSystem({})'.format(str(self._causes))
 
     def __repr__(self):
         return str(self)
