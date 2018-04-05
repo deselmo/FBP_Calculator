@@ -69,19 +69,19 @@ $ python3 setup.py install
 >       You should create or open the `~/.bash_profile` file. Using the nano command:
 >
 >       ```
->       `$ nano ~/.bash_profile`
+>       $ nano ~/.bash_profile
 >       ```
 >
 >       Write the following:
 >
 >       ```
->       export PATH=/usr/local/bin:$PATH`
+>       export PATH=/usr/local/bin:$PATH
 >       ```
 >
 >       For these changes to activate, in the Terminal window, type:
 >
 >       ```
->       `$ source ~/.bash_profile`
+>       $ source ~/.bash_profile
 >       ```
 >
 > 4. Install python3:
