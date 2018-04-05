@@ -7,7 +7,7 @@ import resource
 resource.setrlimit(resource.RLIMIT_STACK, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
 sys.setrecursionlimit(2**31-1)
 
-a = Analysis(['start.pyw'],
+a = Analysis(['run.pyw'],
              pathex=[],
              binaries=[],
              datas=[],
@@ -25,7 +25,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='FBP Calculator',
+          name='fbp_calculator',
           debug=False,
           strip=False,
           upx=True,

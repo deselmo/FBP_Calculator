@@ -8,13 +8,7 @@ name = 'fbp_calculator'
 
 github = 'https://github.com/deselmo/FBP_Calculator'
 
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-
-with open(path.join(here, 'LICENSE'), encoding='utf-8') as f:
-    license = f.read()
-
-with open(path.join(here, name, 'release.py'), encoding='utf-8') as f:
+with open(path.join(here, name, 'release.py')) as f:
     # Defines __version__
     exec(f.read())
 
@@ -22,7 +16,6 @@ setup(
     name=name,
     version=__version__, # pylint: disable=E0602
     description='FBP Calculator is a Python tool to calculate predicor for Reaction System.',
-    long_description=long_description,
     url=github,
     author='William Guglielmo',
     author_email='william@deselmo.com',
@@ -41,5 +34,5 @@ setup(
         'Bug Reports': '{}/issues'.format(github),
         'Source': '{}/'.format(github),
     },
-    license=license
+    license='MIT'
 )
