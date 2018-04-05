@@ -68,8 +68,7 @@ class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
         height = self.tableWidgetProperties.horizontalHeader().size().height()
         height += self.tableWidgetProperties.verticalHeader().size().height()
         height += self.tableWidgetProperties.horizontalScrollBar().size().height()
-        size = self.tableWidgetProperties.size()
-        self.tableWidgetProperties.setMinimumSize(0, height)
+        self.tableWidgetProperties.setFixedHeight(height+2)
 
         self.setGeometry(
             QtWidgets.QStyle.alignedRect(
