@@ -95,7 +95,7 @@ After pip installing you can run the application from command line:
 ```
 $ fbp_calculator
 ```
-or using the `run.pyw` file  in the repository.
+or using the `FBP Calculator.pyw` file  in the repository.
 
 ## License
 This project is licensed under the [MIT License](https://github.com/deselmo/FBP-Calculator/blob/master/LICENSE).

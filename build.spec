@@ -5,7 +5,7 @@ block_cipher = None
 import sys;
 sys.setrecursionlimit(3000)
 
-a = Analysis(['run.pyw'],
+a = Analysis(['FBP Calculator.pyw'],
              pathex=[],
              binaries=[],
              datas=[],
@@ -23,7 +23,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='fbp_calculator',
+          name='FBP Calculator',
           debug=False,
           strip=False,
           upx=True,
