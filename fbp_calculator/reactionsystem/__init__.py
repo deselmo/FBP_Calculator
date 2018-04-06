@@ -20,5 +20,5 @@ if sys.version_info[0] < 2:
     raise ImportError("Python version 3 for ReactionSystem.")
 del sys
 
-from .reaction_system import *
-from .exceptions import *
+from fbp_calculator.reactionsystem.reaction_system import *
+from fbp_calculator.reactionsystem.exceptions import *

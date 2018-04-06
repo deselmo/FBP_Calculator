@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from .boolean_wrap import (Or, ZERO)
+from fbp_calculator.reactionsystem.boolean_wrap import (Or, ZERO)
     
-from .reaction import Reaction
-from .exceptions import ExceptionReactionSystem
+from fbp_calculator.reactionsystem.reaction import Reaction
+from fbp_calculator.reactionsystem.exceptions import ExceptionReactionSystem
 
 
 class ReactionSet(set):

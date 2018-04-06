@@ -2,7 +2,7 @@
 
 import multiprocessing
 from PyQt5 import QtCore
-from .reactionsystem.boolean_wrap import (
+from fbp_calculator.reactionsystem.boolean_wrap import (
     Not,
     Constant,
     Literal,
@@ -11,9 +11,9 @@ from .reactionsystem.boolean_wrap import (
     AndOp,
     OrOp)
 
-from .reactionsystem import ReactionSystem, ReactionSet, Reaction
+from fbp_calculator.reactionsystem import ReactionSystem, ReactionSet, Reaction
 
-from .reaction_adapter import reaction_invadapter
+from fbp_calculator.reaction_adapter import reaction_invadapter
 
 class QThreadCalculatorFBP(QtCore.QThread):
     stopped = False

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from .boolean_wrap import (
+from fbp_calculator.reactionsystem.boolean_wrap import (
     Not,
     And,
     ONE,
     var)
 
-from .exceptions import ExceptionReactionSystem
+from fbp_calculator.reactionsystem.exceptions import ExceptionReactionSystem
 import re
 
 separator_regex = '\s' #pylint: disable=W1401

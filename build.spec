@@ -3,11 +3,9 @@
 block_cipher = None
 
 import sys;
-import resource
-resource.setrlimit(resource.RLIMIT_STACK, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
-sys.setrecursionlimit(2**31-1)
+sys.setrecursionlimit(3000)
 
-a = Analysis(['fbp_calculator.pyw'],
+a = Analysis(['run.pyw'],
              pathex=[],
              binaries=[],
              datas=[],

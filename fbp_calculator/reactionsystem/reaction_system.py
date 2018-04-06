@@ -4,7 +4,7 @@ from pyeda.inter import expr
 from pyeda.inter import espresso_exprs
 from pyeda.boolalg.expr import Atom 
 
-from .boolean_wrap import (
+from fbp_calculator.reactionsystem.boolean_wrap import (
     Not,
     And,
     Or,
@@ -19,11 +19,11 @@ from .boolean_wrap import (
     ONE,
     var)
 
-from .reaction import Reaction
-from .reaction_set import ReactionSet
-from .exceptions import ExceptionReactionSystem
+from fbp_calculator.reactionsystem.reaction import Reaction
+from fbp_calculator.reactionsystem.reaction_set import ReactionSet
+from fbp_calculator.reactionsystem.exceptions import ExceptionReactionSystem
 
-from ._fbs_iterate_item import _fbs_iterate_item
+from fbp_calculator.reactionsystem._fbs_iterate_item import _fbs_iterate_item
 
 import sys
 if 'time' in sys.argv:

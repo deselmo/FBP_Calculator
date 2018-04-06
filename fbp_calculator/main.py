@@ -1,7 +1,7 @@
 import sys
 import multiprocessing
 from PyQt5 import QtWidgets
-from .mainwindowfbp import MainWindowFBP
+from fbp_calculator.mainwindowfbp import MainWindowFBP
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
