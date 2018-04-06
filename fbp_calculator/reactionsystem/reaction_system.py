@@ -23,6 +23,8 @@ from .reaction import Reaction
 from .reaction_set import ReactionSet
 from .exceptions import ExceptionReactionSystem
 
+from ._fbs_iterate_item import _fbs_iterate_item
+
 import sys
 if 'time' in sys.argv:
     import time
@@ -59,7 +61,7 @@ class ReactionSystem():
             formula = And(formula, self.cause(symbol))
             formula = formula.to_dnf()
         
-        formula = self._fbs(formula, steps)
+        formula = self._fbs_iterative(formula, steps)
         
         if not isinstance(formula, Atom) and formula.is_dnf():
             formula = espresso_exprs(formula)[0]
@@ -69,6 +71,99 @@ class ReactionSystem():
 
         return formula
 
+    def _fbs_iterative(self, formula, step):
+        stack = [_fbs_iterate_item(
+                formula=formula,
+                parent=None,
+                step=step,
+                inv_nf=False)]
+        
+        while True:
+            item = stack.pop()
+            formula = item.formula
+
+            if isinstance(formula, Constant):
+                result = formula
+            
+            
+            elif isinstance(formula, Variable):
+                symbol = formula.name
+                step = item.step
+
+                if not step or not item.remained:
+                    if (step, symbol) in self.cg:
+                        result = ONE
+                    elif (step, symbol) in self.cng:
+                        result = ZERO
+                    else:
+                        result = var('{}_{}'.format(symbol, step))
+                    
+                elif item.remained:
+                    item.remained = 1
+
+                    stack.append(_fbs_iterate_item(
+                        formula=self.cause(symbol),
+                        parent=item,
+                        step=step-1,
+                        inv_nf=item.inv_nf))
+                    continue
+                    
+                if step > 0:
+                    result = Or(result, item.childs[0])
+
+
+            elif isinstance(formula, Complement):
+                if item.remained:
+                    item.remained = 1
+                    
+                    stack.append(_fbs_iterate_item(
+                        formula=Not(formula),
+                        parent=item,
+                        step=item.step,
+                        inv_nf=not item.inv_nf))
+                    continue
+                
+                else:
+                    result = Not(item.childs[0])
+
+
+            elif isinstance(formula, OrAndOp):
+                Op = And if isinstance(formula, AndOp) else Or
+
+                if item.remained:
+                    item.remained = 2
+
+                    stack.append(_fbs_iterate_item(
+                        formula=formula.xs[0],
+                        parent=item,
+                        step=item.step,
+                        inv_nf=item.inv_nf))
+                    stack.append(_fbs_iterate_item(
+                        formula=Op(*formula.xs[1:]),
+                        parent=item,
+                        step=item.step,
+                        inv_nf=item.inv_nf))
+                    continue
+                
+                else:
+                    result = Op(item.childs[0], item.childs[1])
+
+
+            result = result.to_cnf() if item.inv_nf else result.to_dnf()
+
+
+            if item.parent == None:
+                break
+            else:
+                item.parent.remained -= 1
+                item.parent.childs.append(result)
+                if not item.parent.remained:
+                    stack.append(item.parent)
+                continue
+
+
+        return result
+        
     
     def _fbs(self, formula, i, inv_nf=False):
         if isinstance(formula, Constant):
@@ -96,7 +191,6 @@ class ReactionSystem():
                 self._fbs(Op(*formula.xs[1:]), i, inv_nf))
 
         else:
-            print(formula)
             assert()
 
         formula = formula.to_cnf() if inv_nf else formula.to_dnf()

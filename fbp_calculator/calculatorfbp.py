@@ -14,7 +14,6 @@ from .reactionsystem.boolean_wrap import (
 from .reactionsystem import ReactionSystem, ReactionSet, Reaction
 
 from .reaction_adapter import reaction_invadapter
-from .increase_recursion_limit import increase_recursion_limit
 
 class QThreadCalculatorFBP(QtCore.QThread):
     stopped = False
