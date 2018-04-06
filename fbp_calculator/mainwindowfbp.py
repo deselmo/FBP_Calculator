@@ -377,14 +377,15 @@ class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
 
         self.tableWidgetProperties_fillSpace()
         
-        self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Interactive)
 
     def tableWidgetProperties_fillSpace(self):
         if not self.tableWidgetProperties.isEnabled():
             return
 
         for _ in range(self.tableWidgetProperties.columnCount(), self.spinBoxCalculatorSteps.value()):
-            if self.tableWidgetProperties.horizontalScrollBar().maximum() != 0:
+            scrollbar = self.tableWidgetProperties.horizontalScrollBar()
+            if scrollbar.maximum() != 0 and scrollbar.maximum() != scrollbar.value() :
                 break
             self.tableWidgetProperties_addColumn()
     
@@ -410,7 +411,7 @@ class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
                 lineEdit.returnPressed.connect(self.pushButtonCalculate.click)
                 lineEdit.setStatusTip("Example: A B %C D (%C means C from this step)")
                 self.tableWidgetProperties.setCellWidget(i, column, lineEdit)
-        self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        # self.tableWidgetProperties.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
 
 
     def statusbarChanged(self, string):
