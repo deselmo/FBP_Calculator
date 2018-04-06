@@ -28,5 +28,5 @@ exe = EXE(pyz,
           strip=False,
           upx=True,
           runtime_tmpdir=None,
-          icon='fbp-logo.png',
+          icon='fbp-logo.ico',
           console=False )
