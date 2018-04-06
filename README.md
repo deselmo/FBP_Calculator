@@ -2,6 +2,9 @@
 FBP Calculator is a graphical tool for calculating Reaction System predictors.
 
 ## Installation
+#### Release:
+If there's a [release](https://github.com/deselmo/FBP_Calculator/releases) for your system, you can simply use that.
+
 #### Using pip:
 ```
 $ pip3 install fbp_calculator
@@ -21,7 +24,7 @@ install the application:
 $ python3 setup.py install
 ```
 
-> ### Note
+> ### Notes for installation with pip or from the repository:
 > fbp_calculator depends on pyeda, in order to install it you will need to have python headers and libraries.
 >
 > #### Linux
