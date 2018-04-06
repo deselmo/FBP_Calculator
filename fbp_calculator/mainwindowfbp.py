@@ -10,6 +10,7 @@ from .reactionsystem import (
 from .ui_mainwindowfbp import Ui_MainWindowFBP
 from .dialogfbp import DialogFBP
 from .reaction_adapter import reaction_adapter, reaction_invadapter
+from . import __version__
 
 
 class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
@@ -169,7 +170,7 @@ class MainWindowFBP(QtWidgets.QMainWindow, Ui_MainWindowFBP):
     def actionAbout_triggered(self):
         QtWidgets.QMessageBox.about(self,
             self._translate('MainWindowFBP', 'FBP Calculator'),
-            'version 1.0.0\n' +
+            'version {}\n'.format(__version__) +
             'Written by William Guglielmo.\n' + \
             'Based on the work of:\n' + \
             'Roberto Barbuti\n' + \
