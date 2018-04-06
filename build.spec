@@ -4,8 +4,8 @@ block_cipher = None
 
 import sys;
 sys.setrecursionlimit(3000)
-
-a = Analysis(['FBP Calculator.pyw'],
+filename = 'FBP Calculator'
+a = Analysis([filename+'.pyw'],
              pathex=[],
              binaries=[],
              datas=[],
@@ -18,15 +18,20 @@ a = Analysis(['FBP Calculator.pyw'],
              cipher=block_cipher)
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
+icon = 'fbp-logo.ico'
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='FBP Calculator',
+          name=filename,
           debug=False,
           strip=False,
           upx=True,
           runtime_tmpdir=None,
-          icon='fbp-logo.ico',
+          icon=icon,
           console=False )
+app = BUNDLE(exe,
+         name=filename+'.app',
+         icon=icon,
+         bundle_identifier=None)
