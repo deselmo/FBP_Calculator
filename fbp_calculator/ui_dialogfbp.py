@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# Form implementation generated from reading ui file 'formula_ui.ui'
+#
 # Created by: PyQt5 UI code generator 5.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -55,7 +57,6 @@ class Ui_DialogFBP(object):
         self.labelComputing.setObjectName("labelComputing")
         self.gridLayout_2.addWidget(self.labelComputing, 0, 3, 1, 1)
         self.toolButtonSave = QtWidgets.QToolButton(DialogFBP)
-        self.toolButtonSave.setText("")
         icon = QtGui.QIcon.fromTheme("document-save-as")
         self.toolButtonSave.setIcon(icon)
         self.toolButtonSave.setIconSize(QtCore.QSize(18, 18))
@@ -126,9 +127,9 @@ class Ui_DialogFBP(object):
         self.comboBoxFormulaType.setItemText(1, _translate("DialogFBP", "List"))
         self.comboBoxFormulaType.setItemText(2, _translate("DialogFBP", "Table"))
         self.labelComputing.setText(_translate("DialogFBP", "Computing"))
+        self.toolButtonSave.setText(_translate("DialogFBP", "Save As"))
         self.labelSymbols.setText(_translate("DialogFBP", "Symbols:"))
 
-from fbp_calculator import resources_rc
 
 if __name__ == "__main__":
     import sys
