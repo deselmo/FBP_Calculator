@@ -2,12 +2,25 @@
 
 block_cipher = None
 
-import sys;
+import sys
+
 sys.setrecursionlimit(3000)
+
 filename = 'FBP Calculator'
+icon = 'fbp-logo.ico'
+
+binaries = []
+
+if sys.platform == 'win32':
+    import os
+    python_path = os.path.dirname(sys.executable)
+    binaries.append((python_path +
+        '\\Lib\\site-packages\\PyQt5\\Qt\\plugins\\styles\\qwindowsvistastyle.dll',
+        'PyQt5\\Qt\\plugins\\styles'))
+
 a = Analysis([filename+'.pyw'],
              pathex=[],
-             binaries=[],
+             binaries=binaries,
              datas=[],
 			 hiddenimports=['six', 'appdirs', 'packaging', 'packaging.version', 'packaging.specifiers', 'packaging.requirements'],
 			 hookspath=[],
@@ -16,9 +29,10 @@ a = Analysis([filename+'.pyw'],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher)
+
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
-icon = 'fbp-logo.ico'
+
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
@@ -30,7 +44,8 @@ exe = EXE(pyz,
           upx=True,
           runtime_tmpdir=None,
           icon=icon,
-          console=False )
+          console=False)
+
 app = BUNDLE(exe,
          name=filename+'.app',
          icon=icon,
