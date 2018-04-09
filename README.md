@@ -3,7 +3,7 @@ FBP Calculator is a graphical tool for calculating Reaction System predictors.
 
 ## Installation
 #### Release:
-If there's a [release](https://github.com/deselmo/FBP_Calculator/releases) for your system, you can simply use that.
+If there's a [release](https://github.com/deselmo/FBP_Calculator/releases) for your platform, you can simply use that.
 
 #### Using pip:
 ```
