@@ -48,7 +48,7 @@ $ python3 setup.py install
 >   ```
 >
 > #### Windows
-> Download the pyeda binary file for your system from Christoph Gohlke's [pythonlibs page](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyeda) and install it.
+> Download the pyeda binary file for your platform from Christoph Gohlke's [pythonlibs page](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyeda) and install it.
 >
 > ```
 > > pip3 install pyeda‑*.whl
