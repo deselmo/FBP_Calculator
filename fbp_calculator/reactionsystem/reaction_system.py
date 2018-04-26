@@ -24,6 +24,7 @@ from fbp_calculator.reactionsystem.reaction_set import ReactionSet
 from fbp_calculator.reactionsystem.exceptions import ExceptionReactionSystem
 
 from fbp_calculator.reactionsystem._fbs_iterate_item import _fbs_iterate_item
+from fbp_calculator.reactionsystem._fbs_calculated_item import _fbs_calculated_item
 
 import sys
 if 'time' in sys.argv:
@@ -52,6 +53,8 @@ class ReactionSystem():
         
         self.cg = context_given
         self.cng = context_not_given
+
+        self.calculated_items = {}
 
         if 'time' in sys.argv:
             start = time.time()
@@ -84,33 +87,41 @@ class ReactionSystem():
 
             if isinstance(formula, Constant):
                 result = formula
-            
-            
+
+                
             elif isinstance(formula, Variable):
                 symbol = formula.name
                 step = item.step
+                inv_nf = item.inv_nf
 
-                if not step or not item.remained:
-                    if (step, symbol) in self.cg:
-                        result = ONE
-                    elif (step, symbol) in self.cng:
-                        result = ZERO
-                    else:
-                        result = var('{}_{}'.format(symbol, step))
-                    
-                elif item.remained:
-                    item.remained = 1
+                fbs_calculated_item = _fbs_calculated_item(symbol, step, inv_nf)
+                if fbs_calculated_item in self.calculated_items:
+                    result = self.calculated_items[fbs_calculated_item]
 
-                    stack.append(_fbs_iterate_item(
-                        formula=self.cause(symbol),
-                        parent=item,
-                        step=step-1,
-                        inv_nf=item.inv_nf))
-                    continue
-                    
-                if step > 0:
-                    result = Or(result, item.childs[0])
+                else:
+                    if not step or not item.remained:
+                        if (step, symbol) in self.cg:
+                            result = ONE
+                        elif (step, symbol) in self.cng:
+                            result = ZERO
+                        else:
+                            result = var('{}_{}'.format(symbol, step))
+                        
+                    elif item.remained:
+                            item.remained = 1
 
+                            stack.append(_fbs_iterate_item(
+                                formula=self.cause(symbol),
+                                parent=item,
+                                step=step-1,
+                                inv_nf=inv_nf))
+                            continue
+                        
+                    if step > 0:
+                        result = Or(result, item.childs[0])
+
+                    result = result.to_cnf() if inv_nf else result.to_dnf()
+                    self.calculated_items[fbs_calculated_item] = result
 
             elif isinstance(formula, Complement):
                 if item.remained:
@@ -150,7 +161,7 @@ class ReactionSystem():
 
 
             result = result.to_cnf() if item.inv_nf else result.to_dnf()
-
+            
 
             if item.parent == None:
                 break
@@ -171,16 +182,26 @@ class ReactionSystem():
 
         elif isinstance(formula, Variable):
             symbol = formula.name
-            if (i,symbol) in self.cg:
-                return True
-            elif (i,symbol) in self.cng:
-                formula = ZERO
-            else:
-                formula = var('{}_{}'.format(symbol, i))
-            
-            if i > 0:
-                formula = Or(formula, self._fbs(self.cause(symbol), i-1, inv_nf))
 
+            fbs_calculated_item = _fbs_calculated_item(symbol, i, inv_nf)
+            if fbs_calculated_item in self.calculated_items:
+                formula = self.calculated_items[fbs_calculated_item]
+
+            else:
+                if (i,symbol) in self.cg:
+                    self.calculated_items[fbs_calculated_item] = ONE
+                    return ONE
+                elif (i,symbol) in self.cng:
+                    formula = ZERO
+                else:
+                    formula = var('{}_{}'.format(symbol, i))
+                
+                if i > 0:
+                    formula = Or(formula, self._fbs(self.cause(symbol), i-1, inv_nf))
+                
+                self.calculated_items[fbs_calculated_item] = formula
+        
+        
         elif isinstance(formula, Complement):
             formula = Not(self._fbs(Not(formula), i, not inv_nf))
 
