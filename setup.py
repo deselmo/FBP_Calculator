@@ -23,7 +23,7 @@ setup(
     install_requires=[
         'pyeda>=0.28.0',
         'PyQt5>=5.10.1',
-        'XlsxWriter>=1.0.2'
+        'XlsxWriter>=0.7.3'
     ],
     entry_points={
         'console_scripts': [

@@ -1,4 +1,4 @@
-class _fbs_calculated_item():
+class FbsCalculatedItem():
     def __init__(self, symbol, step, inv_nf):
         self.symbol = symbol
         self.step = step

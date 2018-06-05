@@ -16,9 +16,9 @@ from fbp_calculator.reactionsystem import ReactionSystem, ReactionSet, Reaction
 from fbp_calculator.reaction_adapter import reaction_invadapter
 
 class QThreadCalculatorFBP(QtCore.QThread):
-    stopped = False
-
     def __init__(self, dialog):
+        self.stopped = False
+
         self.result = multiprocessing.Manager().dict()
         self.result['completed'] = False
         self.result['formula'] = None
